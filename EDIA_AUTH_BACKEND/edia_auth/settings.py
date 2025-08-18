@@ -26,6 +26,8 @@ SECRET_KEY = 'django-insecure-k76201sg_^rx_yfeamvfoml_fi20gu-l!a-u)q&_xx@)7j4(r+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+
+#LOCALCHOST Y CONEXION CON FLUTTER
 ALLOWED_HOSTS = ['127.0.0.1','10.0.2.2']
 
 
@@ -182,6 +184,5 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
-
 
 CORS_ALLOW_ALL_ORIGINS = True

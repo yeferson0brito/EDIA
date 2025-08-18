@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'layouts/Login.dart';
+import 'layouts/home_screen.dart';
 import 'layouts/register_screen.dart';
 import 'layouts/login_screen.dart';
 
@@ -18,10 +18,10 @@ class MainApp extends StatelessWidget {
       routes: {
         '/login': (context) => LoginScreen(),
         '/register': (context) => RegisterScreen(),
-        '/postlogin': (context) => Login(),
+        '/home': (context) => Login(),
         // Aquí puedes añadir más rutas, como la pantalla de inicio después del login
         // '/home': (context) => HomeScreen(),
-      },
+      },  
     );
   }
 }

@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 // Necesitaremos el paquete HTTP para la comunicación con el backend
 import 'package:http/http.dart' as http;
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'dart:convert'; // Para convertir los formatos de JSON
 import 'package:shared_preferences/shared_preferences.dart'; // Para guardar el token
 
@@ -71,11 +72,15 @@ class _LoginScreenState extends State<LoginScreen> {
         final String accessToken = responseData['access'];
         final String refreshToken = responseData['refresh'];
 
-        // Guardar los tokens de forma segura
+        Map<String, dynamic> decodedToken = JwtDecoder.decode(accessToken);
+        String userRole = decodedToken['role']; //Decodificamos
+
+        // Guardar los tokens
         final prefs =
             await SharedPreferences.getInstance(); //Para almacenar datos simples del usuario
         await prefs.setString('accessToken', accessToken);
         await prefs.setString('refreshToken', refreshToken);
+        await prefs.setString('rolUser', userRole);
 
         _showMessage(
           'Login exitoso!',
@@ -84,11 +89,12 @@ class _LoginScreenState extends State<LoginScreen> {
         //mostramos en consolaq
         print('Login exitoso. Access Token: $accessToken');
         print('Refresh Token: $refreshToken');
+        print('Rol del usuario: $userRole');
 
         if (!mounted) return; // Comprobar si el widget sigue en el árbol.
         Navigator.pushReplacementNamed(
           context,
-          '/postlogin',
+          '/home',
         ); //Pasamos a HomeScreen
       } else if (response.statusCode == 401) {
         // Credenciales inválidas

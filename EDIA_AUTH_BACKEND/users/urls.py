@@ -1,7 +1,7 @@
 # users/urls.py
 
 from django.urls import path
-from .views import RegisterView, MyTokenObtainPairView # Importa nuestras vistas
+from .views import RegisterView, MyTokenObtainPairView # Importamosw las visatas
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
