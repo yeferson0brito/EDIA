@@ -72,8 +72,34 @@ class _LoginScreenState extends State<LoginScreen> {
         final String accessToken = responseData['access'];
         final String refreshToken = responseData['refresh'];
 
-        Map<String, dynamic> decodedToken = JwtDecoder.decode(accessToken);
-        String userRole = decodedToken['role']; //Decodificamos
+        // Decodificar token y extraer grupos/rol (tu serializer añade 'group')
+        final Map<String, dynamic> decodedToken = JwtDecoder.decode(accessToken);
+        print('decodedToken: ${jsonEncode(decodedToken)}'); // depuración
+
+        String? userRole;
+        //  claim 'group' desde el token 
+        if (decodedToken.containsKey('group')) {
+          final groupsClaim = decodedToken['group'];
+          if (groupsClaim is List && groupsClaim.isNotEmpty) {
+            userRole = groupsClaim.first?.toString();
+          } else if (groupsClaim is String) {
+            userRole = groupsClaim;
+          }
+        }
+        // fallback: respuesta del login incluye user -> groups
+        if (userRole == null && responseData.containsKey('user')) {
+          final userObj = responseData['user'];
+          if (userObj is Map && userObj.containsKey('groups')) {
+            final groupsResp = userObj['groups'];
+            if (groupsResp is List && groupsResp.isNotEmpty) {
+              userRole = groupsResp.first?.toString();
+            } else if (groupsResp is String) {
+              userRole = groupsResp;
+            }
+          }
+        }
+        // valor por defecto si no hay información
+        userRole ??= 'Usuario Básico';
 
         // Guardar los tokens
         final prefs =
@@ -81,6 +107,7 @@ class _LoginScreenState extends State<LoginScreen> {
         await prefs.setString('accessToken', accessToken);
         await prefs.setString('refreshToken', refreshToken);
         await prefs.setString('rolUser', userRole);
+        print('Rol del usuario: $userRole');
 
         _showMessage(
           'Login exitoso!',
@@ -90,6 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
         print('Login exitoso. Access Token: $accessToken');
         print('Refresh Token: $refreshToken');
         print('Rol del usuario: $userRole');
+        print('RESPONSE BODY  ${response.body}');
 
         if (!mounted) return; // Comprobar si el widget sigue en el árbol.
         Navigator.pushReplacementNamed(

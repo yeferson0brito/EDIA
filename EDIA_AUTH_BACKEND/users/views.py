@@ -36,13 +36,17 @@ class RegisterView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)  # Valida los datos recibidos
         user = serializer.save()  # Si es válido, crea el usuario
 
+        role = user.profile.role.name if hasattr(user, 'profile') and user.profile.role else None
+        groups = [g.name for g in user.groups.all()]
         return Response({
             "user": {
                 "id": user.id,
                 "username": user.username,
                 "email": user.email,
                 "first_name": user.first_name,
-                "last_name": user.last_name
+                "last_name": user.last_name,
+                "role": role,
+                "groups": groups
             },
             "message": "Usuario registrado exitosamente."
         }, status=status.HTTP_201_CREATED)  # Código 201: Creado
@@ -62,6 +66,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         # Añadir campos personalizados al token si es necesario
         token['username'] = user.username
         token['email'] = user.email
+        token['group'] = [g.name for g in user.groups.all()]
 
         # Comprobamos si el usuario tiene un perfil asociado y que el campo no este vacio
         if hasattr(user, 'profile') and user.profile.role:
@@ -72,6 +77,20 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         return token
 
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        user = self.user
+        data['user'] = {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "role": user.profile.role.name if hasattr(user, 'profile') and user.profile.role else None,
+            "groups": [g.name for g in user.groups.all()]
+        }
+        return data
+
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
@@ -80,13 +99,12 @@ def delete_user_view(request, user_id_to_delete):
     if not request.user.has_perm('users.can_delete_user'):
         return Response({"detail": "No tienes permiso para eliminar usuarios."}, status=403)
 
-        # Lógica para eliminar el usuario
-        try:
-            user_to_delete = User.objects.get(id=user_id_to_delete)
-            user_to_delete.delete()
-            return Response({"detail": "Usuario eliminado."}, status=204)
-        except User.DoesNotExist:
-            return Response({"detail": "Usuario no encontrado."}, status=404)
+    try:
+        user_to_delete = User.objects.get(id=user_id_to_delete)
+        user_to_delete.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)   # <- devolver 204 sin body
+    except User.DoesNotExist:
+        return Response({"detail": "Usuario no encontrado."}, status=404)
 
     return Response({"detail": "Usuario eliminado."}, status=204)
 

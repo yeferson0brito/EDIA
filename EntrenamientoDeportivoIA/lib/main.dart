@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'layouts/home_screen.dart';
 import 'layouts/register_screen.dart';
 import 'layouts/login_screen.dart';
+import 'layouts/rolbasic_screen.dart';
+import 'layouts/roltrainer.dart';
 
 void main() {
   runApp(const MainApp());
@@ -19,8 +21,8 @@ class MainApp extends StatelessWidget {
         '/login': (context) => LoginScreen(),
         '/register': (context) => RegisterScreen(),
         '/home': (context) => Login(),
-        // Aquí puedes añadir más rutas, como la pantalla de inicio después del login
-        // '/home': (context) => HomeScreen(),
+        '/rolbasic': (context) => rolbasic(),
+        '/roltrainer': (context) => roltrainer(),
       },  
     );
   }

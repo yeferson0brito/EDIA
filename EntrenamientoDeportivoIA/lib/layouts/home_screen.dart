@@ -1,7 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Login extends StatelessWidget {
   const Login({super.key});
+
+  Future<void> _logout(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('accessToken');
+    await prefs.remove('refreshToken');
+    await prefs.remove('rolUser');
+    // Navegar al login y eliminar rutas anteriores
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -9,6 +19,13 @@ class Login extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Entrenamiento Deportivo IA'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Cerrar sesión',
+            onPressed: () => _logout(context),
+          ),
+        ],
       ),
       body: Center(
         child: Column(
@@ -30,10 +47,16 @@ class Login extends StatelessWidget {
             const SizedBox(height: 30),
             ElevatedButton(
               onPressed: () {
-                // Acción al presionar el botón
+                Navigator.pushNamed(context, '/rolbasic');
               },
-              child: const Text('Iniciar'),
+              child: const Text('USUARIO BASICO'),
             ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/roltrainer');
+              },
+              child: const Text('ENTRENADOR'),
+            )
           ],
         ),
       ),
