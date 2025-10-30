@@ -1,8 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class Login extends StatelessWidget {
+class Login extends StatefulWidget {
   const Login({super.key});
+
+  @override
+  State<Login> createState() => _LoginState();
+}
+
+class _LoginState extends State<Login> {
+  int _selectedIndex = 0;
+
+  static const List<Widget> _pages = <Widget>[
+    Center(
+      child: Text(
+        'Home',
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      ),
+    ),
+    Center(
+      child: Text(
+        'Perfil',
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      ),
+    ),
+    Center(
+      child: Text(
+        'Ajustes',
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      ),
+    ),
+  ];
 
   Future<void> _logout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
@@ -13,13 +41,32 @@ class Login extends StatelessWidget {
     Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
 
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Entrenamiento Deportivo IA'),
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Image.asset(
+            'assets/images/Desplegable_Icon3.png',
+            height: 36,
+            fit: BoxFit.contain,
+          ),
+        ),
+        title: const Text('EDIA'),
         centerTitle: true,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.person),
+            tooltip: 'Perfil',
+            onPressed: () => setState(() => _selectedIndex = 1),
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Cerrar sesión',
@@ -27,39 +74,52 @@ class Login extends StatelessWidget {
           ),
         ],
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.fitness_center, size: 80, color: Colors.blue),
-            const SizedBox(height: 20),
-            const Text(
-              'Bienvenido a tu entrenador inteligente',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'Comienza tu entrenamiento personalizado ahora.',
-              style: TextStyle(fontSize: 16),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 30),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/rolbasic');
-              },
-              child: const Text('USUARIO BASICO'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/roltrainer');
-              },
-              child: const Text('ENTRENADOR'),
-            )
-          ],
-        ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: _pages[_selectedIndex],
       ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        items: <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Image.asset("assets/images/Rutina_Outline_Icon.png", height:50),
+            activeIcon: Image.asset("assets/images/Rutina_Solid_Icon.png", height:60, ),
+          ),
+          BottomNavigationBarItem(
+            icon: Image.asset("assets/images/Progreso_Outline_Icon.png", height:50),
+            activeIcon: Image.asset("assets/images/Progreso_Solid_Icon.png", height:60, ),
+          ),
+          BottomNavigationBarItem(
+           icon: Image.asset("assets/images/Configuraciones_Outline_Icon.png", height:50),
+            activeIcon: Image.asset("assets/images/Configuraciones_Solid_Icon.png", height:60, ),
+          ),
+        ],
+      ),
+      floatingActionButton: (_selectedIndex == 0)
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FloatingActionButton.extended(
+                  heroTag: 'basic',
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/rolbasic');
+                  },
+                  icon: const Icon(Icons.person_outline),
+                  label: const Text('Usuario Básico'),
+                ),
+                const SizedBox(height: 8),
+                FloatingActionButton.extended(
+                  heroTag: 'trainer',
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/roltrainer');
+                  },
+                  icon: const Icon(Icons.fitness_center),
+                  label: const Text('Entrenador'),
+                ),
+              ],
+            )
+          : null,
     );
   }
 }

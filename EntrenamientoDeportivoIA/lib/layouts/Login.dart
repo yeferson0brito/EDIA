@@ -17,7 +17,7 @@ class Login extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.all(12.0),
-            child: Image.asset("assets/images/CopiaLogo.PNG"),
+            child: Image.asset("assets/images/Logo.PNG"),
           ),
           //Image.network("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSRRckyaWGMkFa9aRiYLT4kKFUIwB3nW21LBA&s"),
           Padding(

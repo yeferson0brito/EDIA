@@ -156,7 +156,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 //LOGO
                 Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: Image.asset("assets/images/CopiaLogo.PNG"),
+                  child: Image.asset("assets/images/EDIA_Text.png"),
                 ),
                 //USERNAME FIELD*************************************************************************************
                 TextFormField(

@@ -177,7 +177,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 90),
               Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Image.asset("assets/images/CopiaLogo.PNG"),
+                child: Image.asset("assets/images/EDIA_Text.png"),
               ),
               //USERNAME FIELD***************************************************************************************
               const SizedBox(height: 35),

@@ -1,3 +1,38 @@
+
+
+# Flutter / Dart
+/.dart_tool/
+/.build/
+build/
+.packages
+.pub/
+/.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+
+# Assets cache / generated
+**/generated/
+*.lock
+
+# Android/iOS build
+/android/.gradle/
+/android/build/
+/android/app/build/
+/ios/Pods/
+/ios/Flutter/Flutter.framework
+
+# Python cache
+__pycache__/
+*.pyc
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
 # Miscellaneous
 *.class
 *.log
