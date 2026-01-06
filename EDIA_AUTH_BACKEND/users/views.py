@@ -9,6 +9,8 @@ from rest_framework import status
 from .serializers import RegisterSerializer
 # El modelo de usuario de Django
 from django.contrib.auth.models import User, Group
+from .models import Profile
+from .serializers import ProfileSerializer, OnboardingSerializer
 from rest_framework.permissions import DjangoModelPermissions
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
@@ -87,7 +89,8 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
             "first_name": user.first_name,
             "last_name": user.last_name,
             "role": user.profile.role.name if hasattr(user, 'profile') and user.profile.role else None,
-            "groups": [g.name for g in user.groups.all()]
+            "groups": [g.name for g in user.groups.all()],
+            "onboarded": user.profile.onboarded if hasattr(user, 'profile') else False
         }
         return data
 
@@ -111,3 +114,23 @@ def delete_user_view(request, user_id_to_delete):
 
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def onboarding_view(request):
+    profile = getattr(request.user, 'profile', None)
+    if request.method == 'GET':
+        if not profile:
+            return Response({}, status=status.HTTP_200_OK)
+        return Response(ProfileSerializer(profile).data, status=status.HTTP_200_OK)
+
+    # POST: actualizar datos y marcar onboarded True
+    if not profile:
+        return Response({"detail": "Profile not found."}, status=status.HTTP_400_BAD_REQUEST)
+    serializer = OnboardingSerializer(profile, data=request.data, partial=True)
+    serializer.is_valid(raise_exception=True)
+    profile = serializer.save()
+    profile.onboarded = True
+    profile.save()
+    return Response(ProfileSerializer(profile).data, status=status.HTTP_200_OK)

@@ -1,9 +1,21 @@
 # IMPORTS PARA SERIALIZERS**********************************************************************************
 from django.contrib.auth.models import User, Group
+from .models import Profile
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator  # Para validar campos únicos
 import re  # expresiones regulares
 from django.core.exceptions import ObjectDoesNotExist
+
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ('date_of_birth', 'height_cm', 'weight_kg', 'gender', 'onboarded', 'role')
+        read_only_fields = ('onboarded', 'role')
+
+class OnboardingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ('date_of_birth', 'height_cm', 'weight_kg', 'gender')
 
 
 class RegisterSerializer(serializers.ModelSerializer):

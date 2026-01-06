@@ -1,0 +1,27 @@
+@baseUrl = http://127.0.0.1:8000
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY3NzQxNTg4LCJpYXQiOjE3Njc3Mzc5ODgsImp0aSI6IjQ5OGQwZDMxNDFiOTRiZjU5ZGQzYzc2YjRiYmM1MTEwIiwidXNlcl9pZCI6MjAsInVzZXJuYW1lIjoidXNlcm5hbWUyIiwiZW1haWwiOiJ1c2VybmFtZTJAdXNlci5jb20iLCJncm91cCI6WyJVc3VhcmlvIEJhc2ljbyJdLCJyb2xlIjoiVXN1YXJpbyBCYXNpY28ifQ.RAk7cHwRenYb9gjMycR8CsrqkE6-78pYu49PSYRJLqw
+
+### Login (obtén access token)
+POST {{baseUrl}}/api/users/login/
+Content-Type: application/json
+
+{
+  "username": "username2",
+  "password": "username2"
+}
+
+### Obtener profile / estado onboarding (GET)
+GET {{baseUrl}}/api/onboarding/
+Authorization: Bearer {{accessToken}}
+
+### Completar onboarding (POST)
+POST {{baseUrl}}/api/onboarding/
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "date_of_birth": "1990-01-01",
+  "height_cm": 180,
+  "weight_kg": 75.5,
+  "gender": "M"
+}
