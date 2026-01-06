@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'layouts/home_screen.dart';
 import 'layouts/register_screen.dart';
 import 'layouts/login_screen.dart';
-import 'layouts/onboarding_screen.dart';
 import 'layouts/rolbasic_screen.dart';
 import 'layouts/roltrainer.dart';
 
@@ -22,7 +21,6 @@ class MainApp extends StatelessWidget {
         '/login': (context) => LoginScreen(),
         '/register': (context) => RegisterScreen(),
         '/home': (context) => Login(),
-        '/onboarding': (context) => const OnboardingScreen(),
         '/rolbasic': (context) => rolbasic(),
         '/roltrainer': (context) => roltrainer(),
       },  

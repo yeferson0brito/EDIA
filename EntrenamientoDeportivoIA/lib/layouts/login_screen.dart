@@ -102,7 +102,8 @@ class _LoginScreenState extends State<LoginScreen> {
         userRole ??= 'Usuario Básico';
 
         // Guardar los tokens
-        final prefs = await SharedPreferences.getInstance(); //Para almacenar datos simples del usuario
+        final prefs =
+            await SharedPreferences.getInstance(); //Para almacenar datos simples del usuario
         await prefs.setString('accessToken', accessToken);
         await prefs.setString('refreshToken', refreshToken);
         await prefs.setString('rolUser', userRole);
@@ -114,26 +115,12 @@ class _LoginScreenState extends State<LoginScreen> {
         print('Rol del usuario: $userRole');
         print('RESPONSE BODY  ${response.body}');
 
-        // Determinar si el usuario está onboarded. Backend es autoritativo.
-        bool onboarded = false;
-        if (responseData.containsKey('onboarded')) {
-          onboarded = responseData['onboarded'] == true;
-        } else if (responseData.containsKey('user')) {
-          final userObj = responseData['user'];
-          if (userObj is Map && userObj.containsKey('onboarded')) {
-            onboarded = userObj['onboarded'] == true;
-          }
-        }
-        // Guardar flag localmente para UX
-        await prefs.setBool('onboarded', onboarded);
-
         if (!mounted) return; // Comprobar si el widget sigue en el árbol.
-        if (onboarded) {
-          Navigator.pushReplacementNamed(context, '/home');
-        } else {
-          // Mostrar pantalla de primeros pasos
-          Navigator.pushReplacementNamed(context, '/onboarding');
-        }
+        Navigator.pushReplacementNamed(
+          context,
+          '/home',
+        ); //Pasamos a HomeScreen
+        
       } else if (response.statusCode == 401) {
         // Credenciales inválidas
         _showMessage('Credenciales inválidas. Intenta de nuevo.', Colors.red);
