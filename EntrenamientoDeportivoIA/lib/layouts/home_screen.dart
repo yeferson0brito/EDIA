@@ -83,16 +83,19 @@ class _LoginState extends State<Login> {
         onTap: _onItemTapped,
         items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Image.asset("assets/images/Rutina_Outline_Icon.png", height:50),
-            activeIcon: Image.asset("assets/images/Rutina_Solid_Icon.png", height:60, ),
+            icon: Image.asset("assets/images/Rutina_Outline_Icon.png", height:50, errorBuilder: (context, error, stackTrace) => const Icon(Icons.fitness_center),),
+            activeIcon: Image.asset("assets/images/Rutina_Solid_Icon.png", height:60, errorBuilder: (context, error, stackTrace) => const Icon(Icons.fitness_center),),
+            label: 'Rutina'
           ),
           BottomNavigationBarItem(
             icon: Image.asset("assets/images/Progreso_Outline_Icon.png", height:50),
             activeIcon: Image.asset("assets/images/Progreso_Solid_Icon.png", height:60, ),
+            label: 'Progreso'
           ),
           BottomNavigationBarItem(
            icon: Image.asset("assets/images/Configuraciones_Outline_Icon.png", height:50),
             activeIcon: Image.asset("assets/images/Configuraciones_Solid_Icon.png", height:60, ),
+            label: 'Ajustes'
           ),
         ],
       ),
