@@ -5,6 +5,7 @@ import 'layouts/login_screen.dart';
 import 'layouts/rolbasic_screen.dart';
 import 'layouts/roltrainer.dart';
 import 'layouts/onboarding_screen.dart';
+import 'layouts/splash_screen.dart';
 
 void main() {
   runApp(const MainApp());
@@ -17,7 +18,7 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
 
-      home: LoginScreen(), // La pantalla de inicio será el login
+      home: const SplashScreen(), // La pantalla de inicio será el Splash
       routes: {
         '/login': (context) => LoginScreen(),
         '/register': (context) => RegisterScreen(),
