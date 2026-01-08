@@ -98,9 +98,25 @@ class _LoginScreenState extends State<LoginScreen> {
             }
           }
         }
-        // valor por defecto si no hay información
+//##############################################################################
+// valor por defecto si no hay información
         userRole ??= 'Usuario Básico';
 
+        // VERIFICAR ONBOARDING
+        // Intentamos obtener el estado 'onboarded' de la respuesta.
+        // Asumimos que la respuesta JSON tiene una estructura donde podemos encontrarlo.
+        // Si no viene en el login, por defecto lo mandamos al onboarding para asegurar los datos.
+        bool isOnboarded = false;
+        
+        // Verificamos directamente en 'user' -> 'onboarded' según tu estructura JSON
+        if (responseData.containsKey('user') && responseData['user'] is Map<String, dynamic>) {
+           final userMap = responseData['user'];
+           // Usamos el operador ?? false para asegurar que sea booleano
+           isOnboarded = userMap['onboarded'] ?? false;
+           print('Estado Onboarding detectado: $isOnboarded');
+        }
+
+//###################################################################################################################################
         // Guardar los tokens
         final prefs =
             await SharedPreferences.getInstance(); //Para almacenar datos simples del usuario
@@ -116,11 +132,18 @@ class _LoginScreenState extends State<LoginScreen> {
         print('RESPONSE BODY  ${response.body}');
 
         if (!mounted) return; // Comprobar si el widget sigue en el árbol.
+
+//###################################################################################################################################
+        
+        // REDIRECCIÓN INTELIGENTE
+        // Si ya hizo onboarding -> Home. Si no -> OnboardingScreen
+        final String nextRoute = isOnboarded ? '/home' : '/onboarding';
+
         Navigator.pushReplacementNamed(
           context,
-          '/home',
+          nextRoute,///home
         ); //Pasamos a HomeScreen
-        
+//####################################################################################################################################
       } else if (response.statusCode == 401) {
         // Credenciales inválidas
         _showMessage('Credenciales inválidas. Intenta de nuevo.', Colors.red);

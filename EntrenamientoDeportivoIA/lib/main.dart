@@ -4,6 +4,7 @@ import 'layouts/register_screen.dart';
 import 'layouts/login_screen.dart';
 import 'layouts/rolbasic_screen.dart';
 import 'layouts/roltrainer.dart';
+import 'layouts/onboarding_screen.dart';
 
 void main() {
   runApp(const MainApp());
@@ -23,6 +24,7 @@ class MainApp extends StatelessWidget {
         '/home': (context) => Login(),
         '/rolbasic': (context) => rolbasic(),
         '/roltrainer': (context) => roltrainer(),
+        '/onboarding': (context) => OnboardingScreen(),
       },  
     );
   }
