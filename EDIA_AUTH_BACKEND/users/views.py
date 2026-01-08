@@ -9,8 +9,8 @@ from rest_framework import status
 from .serializers import RegisterSerializer
 # El modelo de usuario de Django
 from django.contrib.auth.models import User, Group
-from .models import Profile
-from .serializers import ProfileSerializer, OnboardingSerializer
+from .models import Profile, DailyRecord
+from .serializers import ProfileSerializer, OnboardingSerializer, DailyRecordSerializer
 from rest_framework.permissions import DjangoModelPermissions
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
@@ -134,3 +134,15 @@ def onboarding_view(request):
     profile.onboarded = True
     profile.save()
     return Response(ProfileSerializer(profile).data, status=status.HTTP_200_OK)
+
+class DailyRecordListCreateView(generics.ListCreateAPIView):
+    serializer_class = DailyRecordSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Retorna solo los registros del usuario autenticado
+        return DailyRecord.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        # Asigna automáticamente el usuario al guardar
+        serializer.save(user=self.request.user)

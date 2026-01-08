@@ -1,13 +1,12 @@
 @baseUrl = http://127.0.0.1:8000
-@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY3NzQxNTg4LCJpYXQiOjE3Njc3Mzc5ODgsImp0aSI6IjQ5OGQwZDMxNDFiOTRiZjU5ZGQzYzc2YjRiYmM1MTEwIiwidXNlcl9pZCI6MjAsInVzZXJuYW1lIjoidXNlcm5hbWUyIiwiZW1haWwiOiJ1c2VybmFtZTJAdXNlci5jb20iLCJncm91cCI6WyJVc3VhcmlvIEJhc2ljbyJdLCJyb2xlIjoiVXN1YXJpbyBCYXNpY28ifQ.RAk7cHwRenYb9gjMycR8CsrqkE6-78pYu49PSYRJLqw
-
+@accessToken = 
 ### Login (obtén access token)
-POST {{baseUrl}}/api/users/login/
+POST {{baseUrl}}/api/login/
 Content-Type: application/json
 
 {
-  "username": "username2",
-  "password": "username2"
+  "username": "username1",
+  "password": "username1"
 }
 
 ### Obtener profile / estado onboarding (GET)
@@ -25,3 +24,24 @@ Authorization: Bearer {{accessToken}}
   "weight_kg": 75.5,
   "gender": "M"
 }
+
+### ------------------------------------------------------------------------
+### HISTORIAL (DAILY RECORDS)
+### ------------------------------------------------------------------------
+
+### Crear un registro diario (POST)
+POST {{baseUrl}}/api/history/
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "date": "2023-10-28",
+  "steps": 8500,
+  "sleep_hours": 7.5,
+  "mood": 4,
+  "hydration_ml": 2000
+}
+
+### Obtener historial completo (GET)
+GET {{baseUrl}}/api/history/
+Authorization: Bearer {{accessToken}}

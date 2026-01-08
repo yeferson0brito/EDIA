@@ -1,6 +1,6 @@
 # IMPORTS PARA SERIALIZERS**********************************************************************************
 from django.contrib.auth.models import User, Group
-from .models import Profile
+from .models import Profile, DailyRecord
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator  # Para validar campos únicos
 import re  # expresiones regulares
@@ -17,6 +17,11 @@ class OnboardingSerializer(serializers.ModelSerializer):
         model = Profile
         fields = ('date_of_birth', 'height_cm', 'weight_kg', 'gender')
 
+class DailyRecordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DailyRecord
+        fields = ('id', 'date', 'steps', 'sleep_hours', 'mood', 'hydration_ml')
+        # El usuario se asignará automáticamente en la vista, no se pide en el JSON
 
 class RegisterSerializer(serializers.ModelSerializer):
     # DEFINICION DE CAMPOS************************************************************************************************************************************************************
