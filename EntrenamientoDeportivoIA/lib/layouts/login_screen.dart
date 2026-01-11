@@ -195,12 +195,12 @@ class _LoginScreenState extends State<LoginScreen> {
               //LOGO************************************************************************************************
               const SizedBox(height: 1),
               SizedBox(
-                width: double.infinity,
-                child: Image.asset(
-                  'assets/images/LogoNEMAr.png',
-                  fit: BoxFit.fitWidth,
-                ),
-              ),
+  width: double.infinity,
+  child: FittedBox(
+    fit: BoxFit.contain,
+    child: Image.asset('assets/images/LogoNEMA.png'),
+  ),
+),
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
