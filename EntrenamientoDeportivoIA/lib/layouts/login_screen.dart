@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'dart:convert'; // Para convertir los formatos de JSON
 import 'package:shared_preferences/shared_preferences.dart'; // Para guardar el token
+import 'package:google_fonts/google_fonts.dart';
 
 //IMPORTACIONES--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -73,11 +74,13 @@ class _LoginScreenState extends State<LoginScreen> {
         final String refreshToken = responseData['refresh'];
 
         // Decodificar token y extraer grupos/rol (tu serializer añade 'group')
-        final Map<String, dynamic> decodedToken = JwtDecoder.decode(accessToken);
+        final Map<String, dynamic> decodedToken = JwtDecoder.decode(
+          accessToken,
+        );
         print('decodedToken: ${jsonEncode(decodedToken)}'); // depuración
 
         String? userRole;
-        //  claim 'group' desde el token 
+        //  claim 'group' desde el token
         if (decodedToken.containsKey('group')) {
           final groupsClaim = decodedToken['group'];
           if (groupsClaim is List && groupsClaim.isNotEmpty) {
@@ -98,8 +101,8 @@ class _LoginScreenState extends State<LoginScreen> {
             }
           }
         }
-//##############################################################################
-// valor por defecto si no hay información
+        //##############################################################################
+        // valor por defecto si no hay información
         userRole ??= 'Usuario Básico';
 
         // VERIFICAR ONBOARDING
@@ -107,16 +110,17 @@ class _LoginScreenState extends State<LoginScreen> {
         // Asumimos que la respuesta JSON tiene una estructura donde podemos encontrarlo.
         // Si no viene en el login, por defecto lo mandamos al onboarding para asegurar los datos.
         bool isOnboarded = false;
-        
+
         // Verificamos directamente en 'user' -> 'onboarded' según tu estructura JSON
-        if (responseData.containsKey('user') && responseData['user'] is Map<String, dynamic>) {
-           final userMap = responseData['user'];
-           // Usamos el operador ?? false para asegurar que sea booleano
-           isOnboarded = userMap['onboarded'] ?? false;
-           print('Estado Onboarding detectado: $isOnboarded');
+        if (responseData.containsKey('user') &&
+            responseData['user'] is Map<String, dynamic>) {
+          final userMap = responseData['user'];
+          // Usamos el operador ?? false para asegurar que sea booleano
+          isOnboarded = userMap['onboarded'] ?? false;
+          print('Estado Onboarding detectado: $isOnboarded');
         }
 
-//###################################################################################################################################
+        //###################################################################################################################################
         // Guardar los tokens
         final prefs =
             await SharedPreferences.getInstance(); //Para almacenar datos simples del usuario
@@ -133,17 +137,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (!mounted) return; // Comprobar si el widget sigue en el árbol.
 
-//###################################################################################################################################
-        
+        //###################################################################################################################################
+
         // REDIRECCIÓN INTELIGENTE
         // Si ya hizo onboarding -> Home. Si no -> OnboardingScreen
         final String nextRoute = isOnboarded ? '/home' : '/onboarding';
 
         Navigator.pushReplacementNamed(
           context,
-          nextRoute,///home
+          nextRoute,
+
+          ///home
         ); //Pasamos a HomeScreen
-//####################################################################################################################################
+        //####################################################################################################################################
       } else if (response.statusCode == 401) {
         // Credenciales inválidas
         _showMessage('Credenciales inválidas. Intenta de nuevo.', Colors.red);
@@ -186,21 +192,31 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Iniciar Sesión')),
+      appBar: AppBar(
+        title: Text(
+          'INICIAR SESIÓN',
+          style: GoogleFonts.montserrat(
+            fontSize: 26,
+            fontWeight: FontWeight.w700, // El peso más grueso
+            letterSpacing: 1, // Un toque más cerrado
+            color: Color(0xFF134E5E),
+          ),
+        ),
+      ),
       body: SingleChildScrollView(
         child: Form(
           key: _formKey, //Llave de formulario
           child: Column(
             children: <Widget>[
               //LOGO************************************************************************************************
-              const SizedBox(height: 1),
-              SizedBox(
-  width: double.infinity,
-  child: FittedBox(
-    fit: BoxFit.contain,
-    child: Image.asset('assets/images/LogoNEMA.png'),
-  ),
-),
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(50.0, 100.0, 50.0, 40.0),
+                child: Image.asset(
+                  'assets/images/LogoNEMA.png',
+                  fit: BoxFit.fitWidth,
+                ),
+              ),
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -209,10 +225,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 35),
                     TextFormField(
                       controller: _usernameController,
-                      decoration: const InputDecoration(
+                      style: GoogleFonts.montserrat(),
+                      decoration: InputDecoration(
                         labelText: 'Nombre de Usuario',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.person),
+                        labelStyle: GoogleFonts.montserrat(),
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.person),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -226,10 +244,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     TextFormField(
                       controller: _passwordController,
                       obscureText: true,
-                      decoration: const InputDecoration(
+                      style: GoogleFonts.montserrat(),
+                      decoration: InputDecoration(
                         labelText: 'Contraseña',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.lock),
+                        labelStyle: GoogleFonts.montserrat(),
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.lock),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -243,23 +263,24 @@ class _LoginScreenState extends State<LoginScreen> {
                     _isLoading
                         ? const CircularProgressIndicator() // Muestra un indicador de carga
                         : SizedBox(
-                            width: double.infinity, // Ocupa todo el ancho disponible
-                            child: ElevatedButton(
-                              onPressed: _login,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 15),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              child: const Text(
-                                'Iniciar Sesión',
-                                style: TextStyle(fontSize: 18),
+                          width:
+                              double.infinity, // Ocupa todo el ancho disponible
+                          child: ElevatedButton(
+                            onPressed: _login,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
                               ),
                             ),
+                            child: Text(
+                              'Iniciar Sesión',
+                              style: GoogleFonts.montserrat(fontSize: 18),
+                            ),
                           ),
+                        ),
                     const SizedBox(height: 20),
                     TextButton(
                       onPressed: () {
@@ -268,7 +289,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           '/register',
                         ); // Navegar a la pantalla de registro
                       },
-                      child: const Text('¿No tienes cuenta? Regístrate aquí.'),
+                      child: Text(
+                        '¿No tienes cuenta? Regístrate aquí.',
+                        style: GoogleFonts.montserrat(),
+                      ),
                     ),
                   ],
                 ),
