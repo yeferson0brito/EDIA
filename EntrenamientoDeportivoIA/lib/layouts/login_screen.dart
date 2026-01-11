@@ -188,81 +188,90 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Iniciar Sesión')),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey, //Llave de formulario
           child: Column(
             children: <Widget>[
               //LOGO************************************************************************************************
-              const SizedBox(height: 90),
+              const SizedBox(height: 1),
+              SizedBox(
+                width: double.infinity,
+                child: Image.asset(
+                  'assets/images/LogoNEMAr.png',
+                  fit: BoxFit.fitWidth,
+                ),
+              ),
               Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Image.asset("assets/images/EDIA_Text.png"),
-              ),
-              //USERNAME FIELD***************************************************************************************
-              const SizedBox(height: 35),
-              TextFormField(
-                controller: _usernameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nombre de Usuario',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.person),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, ingresa tu nombre de usuario';
-                  }
-                  return null;
-                },
-              ),
-              //PASSWORD FIELD***************************************************************************************
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Contraseña',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.lock),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, ingresa tu contraseña';
-                  }
-                  return null;
-                },
-              ),
-              //BTN LOGIN********************************************************************************************
-              const SizedBox(height: 30),
-              _isLoading
-                  ? const CircularProgressIndicator() // Muestra un indicador de carga
-                  : SizedBox(
-                    width: double.infinity, // Ocupa todo el ancho disponible
-                    child: ElevatedButton(
-                      onPressed: _login,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+                child: Column(
+                  children: [
+                    //USERNAME FIELD***************************************************************************************
+                    const SizedBox(height: 35),
+                    TextFormField(
+                      controller: _usernameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Nombre de Usuario',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.person),
                       ),
-                      child: const Text(
-                        'Iniciar Sesión',
-                        style: TextStyle(fontSize: 18),
-                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor, ingresa tu nombre de usuario';
+                        }
+                        return null;
+                      },
                     ),
-                  ),
-              const SizedBox(height: 20),
-              TextButton(
-                onPressed: () {
-                  Navigator.pushNamed(
-                    context,
-                    '/register',
-                  ); // Navegar a la pantalla de registro
-                },
-                child: const Text('¿No tienes cuenta? Regístrate aquí.'),
+                    //PASSWORD FIELD***************************************************************************************
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Contraseña',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.lock),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor, ingresa tu contraseña';
+                        }
+                        return null;
+                      },
+                    ),
+                    //BTN LOGIN********************************************************************************************
+                    const SizedBox(height: 30),
+                    _isLoading
+                        ? const CircularProgressIndicator() // Muestra un indicador de carga
+                        : SizedBox(
+                            width: double.infinity, // Ocupa todo el ancho disponible
+                            child: ElevatedButton(
+                              onPressed: _login,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 15),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              child: const Text(
+                                'Iniciar Sesión',
+                                style: TextStyle(fontSize: 18),
+                              ),
+                            ),
+                          ),
+                    const SizedBox(height: 20),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/register',
+                        ); // Navegar a la pantalla de registro
+                      },
+                      child: const Text('¿No tienes cuenta? Regístrate aquí.'),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
