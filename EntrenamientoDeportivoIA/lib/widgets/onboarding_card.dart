@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'package:google_fonts/google_fonts.dart';
 import '../models/onboarding_item.dart';
 
 class OnboardingCard extends StatelessWidget {
   final OnboardingItem item;
   final double pageOffset;
   final int index;
-  final VoidCallback onPressed;
 
   const OnboardingCard({
     super.key,
     required this.item,
     required this.pageOffset,
     required this.index,
-    required this.onPressed,
   });
 
   @override
@@ -27,8 +26,7 @@ class OnboardingCard extends StatelessWidget {
     double count = 0;
     double page = pageOffset;
     
-    // Lógica para separar la parte entera de la fraccionaria (estilo referencia)
-    // Esto determina cuánto se ha desplazado la página relativa a su índice
+    // Lógica para separar la parte entera de la fraccionaria, Esto determina cuánto se ha desplazado la página relativa a su índice
     while (page > 1) {
       page--;
       count++;
@@ -68,7 +66,7 @@ class OnboardingCard extends StatelessWidget {
           const SizedBox(width: 20),
           Text(
             item.title,
-            style: TextStyle(
+            style: GoogleFonts.montserrat(
                 fontWeight: FontWeight.bold,
                 fontSize: 40, // Ajustado para móviles
                 color: item.lightColor),
@@ -76,7 +74,7 @@ class OnboardingCard extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             item.subtitle,
-            style: TextStyle(
+            style: GoogleFonts.montserrat(
                 fontWeight: FontWeight.bold,
                 fontSize: 40,
                 color: item.darkColor),
@@ -122,7 +120,7 @@ class OnboardingCard extends StatelessWidget {
               const SizedBox(height: 20),
               Text(
                 'EDIA AI',
-                style: const TextStyle(
+                style: GoogleFonts.montserrat(
                     fontSize: 30,
                     fontWeight: FontWeight.bold,
                     color: Colors.white),
@@ -130,22 +128,9 @@ class OnboardingCard extends StatelessWidget {
               const SizedBox(height: 10),
               Text(
                 item.description,
-                style: const TextStyle(color: Colors.white70, fontSize: 18),
+                style: GoogleFonts.montserrat(color: Colors.white70, fontSize: 18),
               ),
               const Spacer(),
-              // Botón de acción dentro de la tarjeta
-              Center(
-                child: ElevatedButton(
-                  onPressed: onPressed,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: item.darkColor,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10)
-                  ),
-                  child: const Text("Continuar", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                ),
-              ),
               const SizedBox(height: 10),
             ],
           ),

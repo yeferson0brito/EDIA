@@ -158,7 +158,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
           children: [
             _buildAppbar(size), // Logo animado superior
             _buildPager(size),  // El PageView con las tarjetas
-            _buildPagerIndicator(), // Los puntos inferiores
+            _buildSkipButton(), // Botón de imagen para saltar
           ],
         ),
       ),
@@ -170,7 +170,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
   Widget _buildAppbar(Size size) {
     return Positioned(
       top: 10,
-      left: 20,
+      left: 25,
       right: 20,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -181,15 +181,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
             builder: (context, child) {
               return Transform.translate(
                 offset: Offset(0, -100 * (1 - _animation.value)),
-                child: Image.asset("assets/images/LogoNEMA.png", height: 40, width: 40, fit: BoxFit.contain),
+                child: Image.asset("assets/images/LogoNEMAsinTexto.png", height: 65, width:235, fit: BoxFit.contain),
               );
             },
           ),
-          // Botón de saltar
-          TextButton(
-            onPressed: () => setState(() => _showForm = true),
-            child: const Text("Saltar Intro"),
-          )
         ],
       )
     );
@@ -213,12 +208,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                   item: _getOnboardingItems()[index],
                   pageOffset: _pageOffset,
                   index: index,
-                  onPressed: () {
-                    // Si es el último slide o el usuario quiere avanzar
-                    setState(() {
-                      _showForm = true;
-                    });
-                  },
+                  
                 );
               },
             ),
@@ -228,38 +218,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
     );
   }
 
-  Widget _buildPagerIndicator() {
+  Widget _buildSkipButton() {
     return Positioned(
-      bottom: 20,
-      left: 30,
-      child: Row(
-        children: List.generate(
-          _getOnboardingItems().length, 
-          (index) => _buildIndicatorDot(index)
+      bottom: 30,
+      right: 20,
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _showForm = true;
+          });
+        },
+        child: Image.asset(
+          'assets/images/BtnSkip.png',
+          height: 60,
+          fit: BoxFit.contain,
         ),
-      ),
-    );
-  }
-
-  Widget _buildIndicatorDot(int index) {
-    double animate = _pageOffset - index;
-    double size = 10;
-    animate = animate.abs();
-    Color color = Colors.grey;
-
-    // Lógica para escalar y colorear el punto activo
-    if (animate < 1 && animate >= 0) {
-      size = 10 + 10 * (1 - animate);
-      color = ColorTween(begin: Colors.grey, end: Colors.blue).transform(1 - animate)!;
-    }
-
-    return Container(
-      margin: const EdgeInsets.all(4),
-      height: size,
-      width: size,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(20)
       ),
     );
   }
@@ -271,7 +244,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
         title: 'Entrena',
         subtitle: 'Inteligente',
         description: 'Tu plan personalizado adaptado por IA para maximizar resultados.',
-        mainImage: 'assets/images/EDIA_Text.png', // Usamos tu logo
+        mainImage: 'assets/images/CardEntrenaInteligente.png', // Usamos tu logo
         iconSmall: Icons.fitness_center,
         iconBlur: Icons.bolt,
         lightColor: Colors.blue.shade300,
