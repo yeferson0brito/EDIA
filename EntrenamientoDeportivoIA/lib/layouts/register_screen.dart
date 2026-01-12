@@ -1,8 +1,10 @@
 //IMPORTACIONES******************************************************************************************************
 // lib/screens/register_screen.dart
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http; //Para las peticiones POST al servidor BacKend
-import 'dart:convert'; //Para convertir las peticiones de formato JSON 
+import 'package:http/http.dart'
+    as http; //Para las peticiones POST al servidor BacKend
+import 'dart:convert'; //Para convertir las peticiones de formato JSON
+import 'package:google_fonts/google_fonts.dart';
 //IMPORTACIONES-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //LLAMADA***********************************************************************************************************
 class RegisterScreen extends StatefulWidget {
@@ -21,7 +23,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _password2Controller = TextEditingController();
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>(); //Clave/Identificador
+  final GlobalKey<FormState> _formKey =
+      GlobalKey<FormState>(); //Clave/Identificador
   bool _isLoading = false; //Indicador de carga
   // URL de la API de registro en Django
   final String _apiUrl = "http://10.0.2.2:8000/api/register/";
@@ -140,11 +143,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-//WIDGETS************************************************************************************************************
+  //WIDGETS************************************************************************************************************
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('REGISTRO')),
+      appBar: AppBar(
+        title: Text(
+          'REGISTRO',
+          style: GoogleFonts.montserrat(
+            fontSize: 26,
+            fontWeight: FontWeight.w700, // El peso más grueso
+            letterSpacing: 1, 
+            color: Color(0xFF134E5E),
+          ),
+        ),
+      ),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -156,7 +169,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 //LOGO
                 Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: Image.asset("assets/images/EDIA_Text.png"),
+                  child: Image.asset("assets/images/LogoNEMA.png"),
                 ),
                 //USERNAME FIELD*************************************************************************************
                 TextFormField(
@@ -261,9 +274,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: _register,
-                        style: ElevatedButton.styleFrom(                          
-                          backgroundColor: Colors.blue, 
-                          foregroundColor: Colors.white, 
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 15),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -271,7 +284,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                         child: const Text(
                           'Registrarse',
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),

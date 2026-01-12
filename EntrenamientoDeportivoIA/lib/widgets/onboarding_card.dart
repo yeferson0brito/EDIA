@@ -26,6 +26,11 @@ class OnboardingCard extends StatelessWidget {
     double count = 0;
     double page = pageOffset;
     
+    // Corrección: Evitar valores negativos que causan error en Curves.transform al rebotar
+    if (page < 0) {
+      page = 0;
+    }
+
     // Lógica para separar la parte entera de la fraccionaria, Esto determina cuánto se ha desplazado la página relativa a su índice
     while (page > 1) {
       page--;
@@ -63,20 +68,20 @@ class OnboardingCard extends StatelessWidget {
       padding: const EdgeInsets.only(top: 10),
       child: Row(
         children: <Widget>[
-          const SizedBox(width: 20),
+          const SizedBox(width: 8),//Ancho del titulo
           Text(
             item.title,
-            style: GoogleFonts.montserrat(
+            style: GoogleFonts.poppins(
                 fontWeight: FontWeight.bold,
-                fontSize: 40, // Ajustado para móviles
+                fontSize: 32, // Tamaño del titulo para las tarjetas
                 color: item.lightColor),
           ),
-          const SizedBox(width: 5),
+          const SizedBox(width: 8),//Ancho del subtitulo (Separación)
           Text(
             item.subtitle,
-            style: GoogleFonts.montserrat(
+            style: GoogleFonts.poppins( 
                 fontWeight: FontWeight.bold,
-                fontSize: 40,
+                fontSize: 32, //Tmaño del subtitulo para las tarjetas
                 color: item.darkColor),
           ),
         ],
@@ -88,11 +93,11 @@ class OnboardingCard extends StatelessWidget {
     return Positioned(
       width: cardWidth,
       height: cardHeight,
-      bottom: size.height * .10,
+      bottom: size.height * .110, //Sombra de la tarjeta
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 30),
+        margin: const EdgeInsets.symmetric(horizontal: 22),//Eestaba en 30
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(25),
+          borderRadius: BorderRadius.circular(25), 
           child: Container(
             color: item.lightColor.withOpacity(0.3), // Fondo base
           ),
@@ -105,9 +110,9 @@ class OnboardingCard extends StatelessWidget {
     return Positioned(
       width: cardWidth,
       height: cardHeight,
-      bottom: size.height * .10,
+      bottom: size.height * .110,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 30),
+        margin: const EdgeInsets.symmetric(horizontal: 22),
         decoration: BoxDecoration(
             color: item.darkColor.withOpacity(0.9), // Tarjeta principal oscura
             borderRadius: BorderRadius.circular(25)),
@@ -119,7 +124,7 @@ class OnboardingCard extends StatelessWidget {
             children: <Widget>[
               const SizedBox(height: 20),
               Text(
-                'EDIA AI',
+                'NEMA',
                 style: GoogleFonts.montserrat(
                     fontSize: 30,
                     fontWeight: FontWeight.bold,
@@ -128,7 +133,7 @@ class OnboardingCard extends StatelessWidget {
               const SizedBox(height: 10),
               Text(
                 item.description,
-                style: GoogleFonts.montserrat(color: Colors.white70, fontSize: 18),
+                style: GoogleFonts.poppins(color: Colors.white70, fontSize: 18),
               ),
               const Spacer(),
               const SizedBox(height: 10),
@@ -140,15 +145,15 @@ class OnboardingCard extends StatelessWidget {
   }
 
   Widget _buildMainImage(Size size, double rotate) {
-    // Imagen principal (Logo) que rota
+    // imagen dentro de cada tarjeta
     return Positioned(
-      bottom: size.height * .10 + 20, // Un poco arriba del borde inferior de la tarjeta
+      bottom: size.height * .10 + 80, // Un poco arriba del borde inferior de la tarjeta
       right: -20, // Salida por la derecha
       child: Transform.rotate(
         angle: -math.pi / 14 * rotate, // Rotación basada en el scroll
         child: Image.asset(
           item.mainImage,
-          height: size.height * .35, // Tamaño dinámico
+          height: size.height * .30, // Tamaño dinámico
           fit: BoxFit.contain,
         ),
       ),
@@ -159,7 +164,7 @@ class OnboardingCard extends StatelessWidget {
     // Elemento decorativo fondo (Parallax rápido)
     return Positioned(
       right: cardWidth / 2 - 60 + animate,
-      bottom: size.height * .05,
+      bottom: size.height * .11,
       child: Icon(item.iconBlur, size: 100, color: item.lightColor.withOpacity(0.4)),
     );
   }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 // Importaciones para el Carrusel
 import '../models/onboarding_item.dart';
@@ -170,11 +171,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
   Widget _buildAppbar(Size size) {
     return Positioned(
       top: 10,
-      left: 25,
+      left: 10,
       right: 20,
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back, color: Color(0xFF154950), size: 30),
+            onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
+          ),
           // Logo animado que entra desde arriba
           AnimatedBuilder(
             animation: _animation,
@@ -221,17 +226,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
   Widget _buildSkipButton() {
     return Positioned(
       bottom: 30,
-      right: 20,
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _showForm = true;
-          });
-        },
-        child: Image.asset(
-          'assets/images/BtnSkip.png',
-          height: 60,
-          fit: BoxFit.contain,
+      left: 30,
+      right: 30,
+      child: SizedBox(
+        height: 55,
+        child: ElevatedButton(
+          onPressed: () => setState(() => _showForm = true),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF154950), // Color oscuro de la paleta
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
+            ),
+            elevation: 5,
+          ),
+          child: Text(
+            "Siguiente",
+            style: GoogleFonts.montserrat(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              letterSpacing: 1.5,
+            ),
+          ),
         ),
       ),
     );
@@ -243,7 +259,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
       OnboardingItem(
         title: 'Entrena',
         subtitle: 'Inteligente',
-        description: 'Tu plan personalizado adaptado por IA para maximizar resultados.',
+        description: 'NEMA crea rutinas personalizadas usando tus datos diarios y adapta cada entrenamiento según tu rendimiento real.',
         mainImage: 'assets/images/CardEntrenaInteligente.png', // Usamos tu logo
         iconSmall: Icons.fitness_center,
         iconBlur: Icons.bolt,
@@ -251,20 +267,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
         darkColor: Colors.blue.shade900,
       ),
       OnboardingItem(
-        title: 'Sigue tu',
+        title: '   Sigue tu',
         subtitle: 'Progreso',
-        description: 'Visualiza tus avances día a día con estadísticas detalladas.',
-        mainImage: 'assets/images/EDIA_Text.png',
+        description: 'Monitorea tu evolución día a día con gráficos claros y análisis inteligentes que revelan cómo avanzas realmente.',
+        mainImage: 'assets/images/CardSiguetuProgreso.png',
         iconSmall: Icons.show_chart,
         iconBlur: Icons.timer,
         lightColor: Colors.green.shade300,
         darkColor: Colors.green.shade900,
       ),
       OnboardingItem(
-        title: 'Alcanza',
+        title: 'Alcanza tus',
         subtitle: 'Metas',
-        description: 'Define tus objetivos y deja que EDIA te guíe hasta ellos.',
-        mainImage: 'assets/images/EDIA_Text.png',
+        description: 'Define tus objetivos y deja que NEMA te guíe con ajustes inteligentes y motivación constante.',
+        mainImage: 'assets/images/CardAlcanzatusMetas.png',
         iconSmall: Icons.flag,
         iconBlur: Icons.star,
         lightColor: Colors.orange.shade300,
