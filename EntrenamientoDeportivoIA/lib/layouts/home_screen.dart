@@ -81,11 +81,6 @@ class _LoginState extends State<Login> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.person),
-            tooltip: 'Perfil',
-            onPressed: () => setState(() => _selectedIndex = 1),
-          ),
-          IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Cerrar sesión',
             onPressed: () => _logout(context),
