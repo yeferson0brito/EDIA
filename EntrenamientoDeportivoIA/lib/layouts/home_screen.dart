@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -10,6 +11,19 @@ class Login extends StatefulWidget {
 
 class _LoginState extends State<Login> {
   int _selectedIndex = 0;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  String _username = "Usuario"; // Valor por defecto
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() => _username = prefs.getString('username') ?? "Usuario");
+  }
 
   static const List<Widget> _pages = <Widget>[
     Center(
@@ -50,13 +64,17 @@ class _LoginState extends State<Login> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Image.asset(
-            'assets/images/Desplegable_Icon3.png',
-            height: 36,
-            fit: BoxFit.contain,
+        leading: GestureDetector(
+          onTap: () => _scaffoldKey.currentState?.openDrawer(),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Image.asset(
+              'assets/images/Desplegable_Icon3.png',
+              height: 36,
+              fit: BoxFit.contain,
+            ),
           ),
         ),
         title: const Text('EDIA'),
@@ -73,6 +91,46 @@ class _LoginState extends State<Login> {
             onPressed: () => _logout(context),
           ),
         ],
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: const Color(0xFF134E5E), width: 2),
+                    ),
+                    child: CircleAvatar(
+                      radius: 30,
+                      backgroundColor: Colors.transparent,
+                      child: Image.asset('assets/images/Configuraciones_Solid_Icon.png', fit: BoxFit.contain),
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: Text(
+                      _username,
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF134E5E),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Aquí puedes agregar más opciones de menú (ListTile)
+          ],
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

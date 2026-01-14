@@ -127,6 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
         await prefs.setString('accessToken', accessToken);
         await prefs.setString('refreshToken', refreshToken);
         await prefs.setString('rolUser', userRole);
+        await prefs.setString('username', username);
         print('Rol del usuario: $userRole');
 
         _showMessage('Login exitoso!', Colors.green); //Confirmacion acceso
