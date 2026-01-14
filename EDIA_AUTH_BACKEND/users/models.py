@@ -19,6 +19,7 @@ class Profile(models.Model):
     height_cm = models.PositiveIntegerField(null=True, blank=True)
     weight_kg = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, null=True, blank=True)
+    activity_level = models.CharField(max_length=50, blank=True, null=True)
     onboarded = models.BooleanField(default=False)
     role = models.ForeignKey(Group, null=True, blank=True, on_delete=models.SET_NULL) 
 

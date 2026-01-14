@@ -1,12 +1,12 @@
 @baseUrl = http://127.0.0.1:8000
-@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY4MzYzMDUxLCJpYXQiOjE3NjgzNTk0NTEsImp0aSI6IjE0NTI2M2I3NDQ2NDQwODM5YWMxZTgwMDlkMmQxM2E3IiwidXNlcl9pZCI6MjIsInVzZXJuYW1lIjoidXNlcm5hbWU0IiwiZW1haWwiOiJ1c2VybmFtZTRAdXNlci5jb20iLCJncm91cCI6WyJVc3VhcmlvIEJhc2ljbyJdLCJyb2xlIjoiVXN1YXJpbyBCYXNpY28ifQ.v4sC7hPwxfDRZknyoHLubj7UXLmawdoI-ljLHchRarQ
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY4MzY1MDYyLCJpYXQiOjE3NjgzNjE0NjIsImp0aSI6ImJjYjU3ZDJkMDJmZTQ5YjU4MGIzZjljMjU1NTBlMzZkIiwidXNlcl9pZCI6MjQsInVzZXJuYW1lIjoidXNlcm5hbWU2IiwiZW1haWwiOiJ1c2VybmFtZTZAdXNlci5jb20iLCJncm91cCI6WyJVc3VhcmlvIEJhc2ljbyJdLCJyb2xlIjoiVXN1YXJpbyBCYXNpY28ifQ.F9UA2n_D0ZXcHg06LeLm-rDMA17eK7T9h1SYg4NTmdo
 ### Login (obtén access token)
 POST {{baseUrl}}/api/login/
 Content-Type: application/json
 
 {
-  "username": "username5",
-  "password": "username5"
+  "username": "username6",
+  "password": "username6"
 }
 
 ### Obtener profile / estado onboarding (GET)

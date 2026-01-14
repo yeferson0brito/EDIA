@@ -36,7 +36,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
   // Controladores para los datos médicos
   final TextEditingController _heightController = TextEditingController();
   final TextEditingController _weightController = TextEditingController();
-  final TextEditingController _targetWeightController = TextEditingController();
   final TextEditingController _dobController = TextEditingController();
   String? _selectedGender;
   String _selectedActivityLevel = "Sedentario"; // Valor por defecto
@@ -69,7 +68,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
     _animationController.dispose();
     _heightController.dispose();
     _weightController.dispose();
-    _targetWeightController.dispose();
     _formPageController.dispose();
     _dobController.dispose();
     super.dispose();
@@ -106,7 +104,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
       // CONVERSIÓN DE DATOS: Convertir String a Number para el backend
       final double? height = double.tryParse(_heightController.text);
       final double? weight = double.tryParse(_weightController.text);
-      final double? targetWeight = double.tryParse(_targetWeightController.text);
 
       
 
@@ -122,7 +119,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
           'date_of_birth': _dobController.text,
           'height_cm': height, // Enviamos número
           'weight_kg': weight, // Enviamos número
-          'target_weight_kg': targetWeight, // Nuevo campo (si el backend lo soporta)
           'gender': _selectedGender,
           'activity_level': _selectedActivityLevel, // Nuevo campo
           'onboarded': true, // Marcamos como completado
@@ -515,13 +511,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
           _buildStyledInput(
             label: "Peso actual",
             controller: _weightController,
-            isNumber: true,
-            suffix: "KG",
-          ),
-          const SizedBox(height: 20),
-          _buildStyledInput(
-            label: "Objetivo de peso",
-            controller: _targetWeightController,
             isNumber: true,
             suffix: "KG",
           ),
