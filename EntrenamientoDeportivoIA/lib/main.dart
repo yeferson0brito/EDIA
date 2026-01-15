@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
-import 'layouts/home_screen.dart';
-import 'layouts/register_screen.dart';
-import 'layouts/login_screen.dart';
-import 'layouts/rolbasic_screen.dart';
-import 'layouts/roltrainer.dart';
-import 'layouts/onboarding_screen.dart';
-import 'layouts/splash_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/register_screen.dart';
+import 'screens/rolbasic_screen.dart';
+import 'screens/roltrainer.dart';
+import 'screens/onboarding_screen.dart';
+import 'screens/splash_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/progress_screen.dart';
+import 'screens/record_screen.dart';
+import 'screens/hydration_screen.dart';
 
 void main() {
   runApp(const MainApp());
@@ -17,22 +20,18 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-
       home: const SplashScreen(), // La pantalla de inicio será el Splash
       routes: {
         '/login': (context) => LoginScreen(),
         '/register': (context) => RegisterScreen(),
-        '/home': (context) => Login(),
+        '/home': (context) => HomeScreen(),
         '/rolbasic': (context) => rolbasic(),
         '/roltrainer': (context) => roltrainer(),
         '/onboarding': (context) => OnboardingScreen(),
-      },  
+        '/progress': (context) => const ProgressScreen(),
+        '/record': (context) => const RecordScreen(),
+        '/hydration': (context) => const HydrationScreen(),
+      },
     );
   }
 }
-
-/*      home: Scaffold(
-        appBar: AppBar(backgroundColor: Colors.blue, toolbarHeight: 35,),
-        body: RegisterScreen(),
-      ),
-*/
