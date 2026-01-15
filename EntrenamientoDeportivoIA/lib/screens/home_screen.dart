@@ -19,12 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String _username = "Usuario"; // Valor por defecto
   late PageController _pageController;
 
-  final List<String> _titles = [
-    'NEMA',
-    'PROGRESO',
-    'HISTORIAL',
-    'HIDRATACIÓN',
-  ];
+  final List<String> _titles = ['NEMA', 'PROGRESO', 'HISTORIAL', 'HIDRATACIÓN'];
 
   @override
   void initState() {
@@ -43,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final prefs = await SharedPreferences.getInstance();
     setState(() => _username = prefs.getString('username') ?? "Usuario");
   }
-  
+
   Future<void> _logout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('accessToken');
@@ -92,6 +87,39 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildDashboardCard({required double height, required String title, required IconData icon}) {
+    return Container(
+      height: height,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.grey[100], // Gris suave de la paleta
+        borderRadius: BorderRadius.circular(20), // Bordes redondeados
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 40, color: const Color(0xFF134E5E)),
+          const SizedBox(height: 10),
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF134E5E),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -111,7 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         title: Text(
           _titles[_selectedIndex],
-        style: GoogleFonts.montserrat(
+          style: GoogleFonts.montserrat(
             fontSize: 26,
             fontWeight: FontWeight.w700,
             letterSpacing: 1,
@@ -125,20 +153,24 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: EdgeInsets.zero,
           children: [
             DrawerHeader(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-              ),
+              decoration: const BoxDecoration(color: Colors.white),
               child: Row(
                 children: [
                   Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFF134E5E), width: 2),
+                      border: Border.all(
+                        color: const Color(0xFF134E5E),
+                        width: 2,
+                      ),
                     ),
                     child: CircleAvatar(
                       radius: 30,
                       backgroundColor: Colors.transparent,
-                      child: Image.asset('assets/images/Configuraciones_Solid_Icon.png', fit: BoxFit.contain),
+                      child: Image.asset(
+                        'assets/images/Configuraciones_Solid_Icon.png',
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 15),
@@ -157,6 +189,34 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             ListTile(
+              leading: const Icon(Icons.settings, color: Color(0xFF134E5E)),
+              title: Text(
+                'Configuraciones',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF134E5E),
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.help_outline, color: Color(0xFF134E5E)),
+              title: Text(
+                'Ayuda',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF134E5E),
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.logout, color: Color(0xFF134E5E)),
               title: Text(
                 'Cerrar Sesión',
@@ -171,6 +231,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+
       body: PageView(
         controller: _pageController,
         physics: const NeverScrollableScrollPhysics(),
@@ -178,13 +239,33 @@ class _HomeScreenState extends State<HomeScreen> {
           setState(() => _selectedIndex = index);
         },
         children: [
-          Padding(
+          SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
-            child: Center(
-              child: Text(
-                'Tablero Principal',
-                style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: const Color(0xFF134E5E)),
-              ),
+            child: Column(
+              children: [
+                // Tarjeta 1: Ancho completo
+                _buildDashboardCard(
+                  height: 150,
+                  title: 'Resumen Diario',
+                  icon: Icons.today,
+                ),
+                const SizedBox(height: 16),
+                // Fila de 2 tarjetas (50% cada una)
+                Row(
+                  children: [
+                    Expanded(child: _buildDashboardCard(height: 150, title: 'Calorías', icon: Icons.local_fire_department)),
+                    const SizedBox(width: 16), // Espacio entre ellas
+                    Expanded(child: _buildDashboardCard(height: 150, title: 'Pasos', icon: Icons.directions_walk)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // Tarjeta 4: Ancho completo (Nueva)
+                _buildDashboardCard(
+                  height: 120,
+                  title: 'Próximo Entreno',
+                  icon: Icons.fitness_center,
+                ),
+              ],
             ),
           ),
           const ProgressScreen(),
