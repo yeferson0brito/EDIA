@@ -5,13 +5,11 @@ class Login extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Es una buena práctica envolver el contenido de una pantalla en un Scaffold.
-    // Scaffold proporciona la estructura visual básica (AppBar, body, etc.).
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bienvenido'), // Título para la pantalla
+        title: const Text('Bienvenido'), 
         automaticallyImplyLeading:
-            false, // Opcional: para no mostrar el botón de "atrás"
+            false,
       ),
       body: ListView(
         children: [

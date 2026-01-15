@@ -44,6 +44,12 @@ class _LoginState extends State<Login> {
         style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
       ),
     ),
+    Center(
+      child: Text(
+        'Hidratación',
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      ),
+    ),
   ];
 
   Future<void> _logout(BuildContext context) async {
@@ -53,6 +59,31 @@ class _LoginState extends State<Login> {
     await prefs.remove('rolUser');
     // Navegar al login y eliminar rutas anteriores
     Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+  }
+
+  void _confirmLogout() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Cerrar Sesión"),
+          content: const Text("¿Estás seguro de que deseas salir?"),
+          actions: [
+            TextButton(
+              child: const Text("Cancelar"),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: const Text("Salir"),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _logout(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _onItemTapped(int index) {
@@ -71,21 +102,22 @@ class _LoginState extends State<Login> {
           child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: Image.asset(
-              'assets/images/Desplegable_Icon3.png',
+              'assets/images/IconDropdown.png',
               height: 36,
               fit: BoxFit.contain,
             ),
           ),
         ),
-        title: const Text('EDIA'),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Cerrar sesión',
-            onPressed: () => _logout(context),
+        title: Text('NEMA',
+        style: GoogleFonts.montserrat(
+            fontSize: 26,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1,
+            color: Color(0xFF134E5E),
+            
           ),
-        ],
+        ),
+        centerTitle: true,
       ),
       drawer: Drawer(
         child: ListView(
@@ -123,7 +155,18 @@ class _LoginState extends State<Login> {
                 ],
               ),
             ),
-            // Aquí puedes agregar más opciones de menú (ListTile)
+            ListTile(
+              leading: const Icon(Icons.logout, color: Color(0xFF134E5E)),
+              title: Text(
+                'Cerrar Sesión',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF134E5E),
+                ),
+              ),
+              onTap: _confirmLogout,
+            ),
           ],
         ),
       ),
@@ -132,23 +175,33 @@ class _LoginState extends State<Login> {
         child: _pages[_selectedIndex],
       ),
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed, // Necesario para más de 3 items
+        backgroundColor: Colors.grey[200],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
+        selectedLabelStyle: GoogleFonts.montserrat(fontWeight: FontWeight.bold),
+        unselectedLabelStyle: GoogleFonts.montserrat(fontWeight: FontWeight.w500),
+        selectedItemColor: const Color(0xFF134E5E),
         items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Image.asset("assets/images/Rutina_Outline_Icon.png", height:50, errorBuilder: (context, error, stackTrace) => const Icon(Icons.fitness_center),),
-            activeIcon: Image.asset("assets/images/Rutina_Solid_Icon.png", height:60, errorBuilder: (context, error, stackTrace) => const Icon(Icons.fitness_center),),
-            label: 'Rutina'
+            icon: Image.asset("assets/images/IconCardsOutline.png", height:40, errorBuilder: (context, error, stackTrace) => const Icon(Icons.fitness_center),),
+            activeIcon: Image.asset("assets/images/IconCardsSolid.png", height:50, errorBuilder: (context, error, stackTrace) => const Icon(Icons.fitness_center),),
+            label: 'Inicio',
           ),
           BottomNavigationBarItem(
-            icon: Image.asset("assets/images/Progreso_Outline_Icon.png", height:50),
-            activeIcon: Image.asset("assets/images/Progreso_Solid_Icon.png", height:60, ),
+            icon: Image.asset("assets/images/IconProgressOutline.png", height:40),
+            activeIcon: Image.asset("assets/images/IconProgressSolid.png", height:50, ),
             label: 'Progreso'
           ),
           BottomNavigationBarItem(
-           icon: Image.asset("assets/images/Configuraciones_Outline_Icon.png", height:50),
-            activeIcon: Image.asset("assets/images/Configuraciones_Solid_Icon.png", height:60, ),
-            label: 'Ajustes'
+           icon: Image.asset("assets/images/IconRecordOutline.png", height:40),
+            activeIcon: Image.asset("assets/images/IconRecordSolid.png", height:50, ),
+            label: 'Historial'
+          ),
+          BottomNavigationBarItem(
+            icon: Image.asset("assets/images/IconWaterOutline.png", height:40),
+            activeIcon: Image.asset("assets/images/IconWaterSolid.png", height:50),
+            label: 'Hidratación'
           ),
         ],
       ),
