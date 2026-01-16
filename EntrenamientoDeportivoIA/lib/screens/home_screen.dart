@@ -636,6 +636,36 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
             ListTile(
+              leading: const Icon(Icons.person_outline, color: Color(0xFF134E5E)),
+              title: Text(
+                'Usuario Básico',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF134E5E),
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/rolbasic');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.fitness_center, color: Color(0xFF134E5E)),
+              title: Text(
+                'Entrenador',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF134E5E),
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/roltrainer');
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.logout, color: Color(0xFF134E5E)),
               title: Text(
                 'Cerrar Sesión',
@@ -751,31 +781,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      floatingActionButton:
-          (_selectedIndex == 0)
-              ? Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  FloatingActionButton.extended(
-                    heroTag: 'basic',
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/rolbasic');
-                    },
-                    icon: const Icon(Icons.person_outline),
-                    label: const Text('Usuario Básico'),
-                  ),
-                  const SizedBox(height: 8),
-                  FloatingActionButton.extended(
-                    heroTag: 'trainer',
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/roltrainer');
-                    },
-                    icon: const Icon(Icons.fitness_center),
-                    label: const Text('Entrenador'),
-                  ),
-                ],
-              )
-              : null,
     );
   }
 }
