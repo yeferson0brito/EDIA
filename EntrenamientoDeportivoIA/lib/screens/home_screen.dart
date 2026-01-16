@@ -87,6 +87,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+
+//TARJETAS
   Widget _buildDashboardCard({required double height, required String title, required IconData icon}) {
     return Container(
       height: height,
@@ -123,16 +125,16 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // Fondo blanco explícito
+      backgroundColor: Colors.blueGrey,
       key: _scaffoldKey,
       appBar: AppBar(
         leading: GestureDetector(
           onTap: () => _scaffoldKey.currentState?.openDrawer(),
           child: Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(4.0),
             child: Image.asset(
               'assets/images/IconDropdown.png',
-              height: 36,
+              height:30,
               fit: BoxFit.contain,
             ),
           ),
