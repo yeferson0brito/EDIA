@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -240,6 +241,85 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // TARJETA DE HIDRATACIÓN (Reemplaza Calorías)
+  Widget _buildHydrationCard() {
+    return Container(
+      height: 150,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // Icono de campana en la parte superior
+          const Positioned(
+            top: 15,
+            left: 15,
+            child: Icon(Icons.notifications_none, size: 20, color: Colors.grey),
+          ),
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(height: 5),
+                Text(
+                  '48%',
+                  style: GoogleFonts.poppins(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF134E5E),
+                  ),
+                ),
+                Text(
+                  '1250ml / 3200ml',
+                  style: GoogleFonts.poppins(
+                    fontSize: 10,
+                    color: Colors.grey[400],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                // Barra de progreso en arco y botón
+                SizedBox(
+                  height: 55,
+                  width: 100,
+                  child: Stack(
+                    alignment: Alignment.topCenter,
+                    children: [
+                      CustomPaint(
+                        size: const Size(80, 40),
+                        painter: _ArcPainter(),
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        child: Container(
+                          height: 35,
+                          width: 35,
+                          decoration: const BoxDecoration(
+                            color: Colors.blue,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.add, color: Colors.white, size: 20),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDashboardCard({
     required double height,
     required String title,
@@ -412,11 +492,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: _buildDashboardCard(
-                        height: 150,
-                        title: 'Calorías',
-                        icon: Icons.local_fire_department,
-                      ),
+                      child: _buildHydrationCard(),
                     ),
                     const SizedBox(width: 16), // Espacio entre ellas
                     Expanded(
@@ -526,4 +602,32 @@ class _HomeScreenState extends State<HomeScreen> {
               : null,
     );
   }
+}
+
+class _ArcPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint trackPaint = Paint()
+      ..color = Colors.grey[200]!
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 10
+      ..strokeCap = StrokeCap.round;
+
+    final Paint progressPaint = Paint()
+      ..color = Colors.lightBlueAccent
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 10
+      ..strokeCap = StrokeCap.round;
+
+    final Rect rect = Rect.fromLTWH(0, 0, size.width, size.height * 2);
+    
+    // Dibuja el fondo del arco (semicírculo completo)
+    canvas.drawArc(rect, math.pi, math.pi, false, trackPaint);
+    
+    // Dibuja el progreso (48% del arco)
+    canvas.drawArc(rect, math.pi, math.pi * 0.48, false, progressPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
