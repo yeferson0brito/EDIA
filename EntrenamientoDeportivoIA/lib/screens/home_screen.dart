@@ -87,15 +87,18 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-
-//TARJETAS
-  Widget _buildDashboardCard({required double height, required String title, required IconData icon}) {
+  //TARJETAS
+  Widget _buildDashboardCard({
+    required double height,
+    required String title,
+    required IconData icon,
+  }) {
     return Container(
       height: height,
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.grey[100], // Gris suave de la paleta
-        borderRadius: BorderRadius.circular(20), // Bordes redondeados
+        color: Colors.grey[100], //paleta
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -125,17 +128,22 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blueGrey,
+      backgroundColor: Colors.grey[200],
       key: _scaffoldKey,
       appBar: AppBar(
-        leading: GestureDetector(
-          onTap: () => _scaffoldKey.currentState?.openDrawer(),
-          child: Padding(
-            padding: const EdgeInsets.all(4.0),
-            child: Image.asset(
-              'assets/images/IconDropdown.png',
-              height:30,
-              fit: BoxFit.contain,
+        backgroundColor: Colors.grey[300],
+        leading: Container(
+          margin: const EdgeInsets.only(left: 10),
+          child: GestureDetector(
+            onTap: () => _scaffoldKey.currentState?.openDrawer(),
+            child: Padding(
+              padding: const EdgeInsets.all(4.0),
+              child: Image.asset(
+                'assets/images/IconDropdown.png',
+                height: 30,
+                
+                fit: BoxFit.contain,
+              ),
             ),
           ),
         ),
@@ -255,9 +263,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Fila de 2 tarjetas (50% cada una)
                 Row(
                   children: [
-                    Expanded(child: _buildDashboardCard(height: 150, title: 'Calorías', icon: Icons.local_fire_department)),
+                    Expanded(
+                      child: _buildDashboardCard(
+                        height: 150,
+                        title: 'Calorías',
+                        icon: Icons.local_fire_department,
+                      ),
+                    ),
                     const SizedBox(width: 16), // Espacio entre ellas
-                    Expanded(child: _buildDashboardCard(height: 150, title: 'Pasos', icon: Icons.directions_walk)),
+                    Expanded(
+                      child: _buildDashboardCard(
+                        height: 150,
+                        title: 'Pasos',
+                        icon: Icons.directions_walk,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -277,7 +297,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed, // Necesario para más de 3 items
-        backgroundColor: Colors.grey[200],
+        backgroundColor: Colors.grey[300],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         selectedLabelStyle: GoogleFonts.montserrat(fontWeight: FontWeight.bold),
