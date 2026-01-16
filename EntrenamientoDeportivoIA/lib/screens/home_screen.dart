@@ -37,6 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
     // Si prefs.getString devuelve null (porque saltamos login), usamos "Admin (Dev)"
+    //setState(() => _username = prefs.getString('username') ?? "Usuario");
     setState(() => _username = prefs.getString('username') ?? "Admin (Dev)");
   }
 
@@ -166,6 +167,72 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // TARJETA DE PASOS (Diseño Circular)
+  Widget _buildStepsCard() {
+    return Container(
+      height: 150,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'Pasos',
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF134E5E),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              // Círculo de progreso
+              SizedBox(
+                height: 60,
+                width: 60,
+                child: CircularProgressIndicator(
+                  value: 5200 / 8000, // Ejemplo estático: 65% completado
+                  strokeWidth: 6,
+                  backgroundColor: Colors.grey[200],
+                  valueColor:
+                      const AlwaysStoppedAnimation<Color>(Color(0xFF134E5E)),
+                ),
+              ),
+              // Contador en el medio
+              Text(
+                '5200',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF134E5E),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Objetivo: 8000',
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: Colors.grey[600],
             ),
           ),
         ],
@@ -339,11 +406,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               children: [
                 // Tarjeta 1: Ancho completo
-                _buildDashboardCard(
-                  height: 150,
-                  title: 'CONSEJO DIARIO',
-                  icon: Icons.today,
-                ),
+                _buildDailyTipCard(),
                 const SizedBox(height: 16),
                 // Fila de 2 tarjetas (50% cada una)
                 Row(
@@ -357,11 +420,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(width: 16), // Espacio entre ellas
                     Expanded(
-                      child: _buildDashboardCard(
-                        height: 150,
-                        title: 'Pasos',
-                        icon: Icons.directions_walk,
-                      ),
+                      child: _buildStepsCard(),
                     ),
                   ],
                 ),
@@ -394,14 +453,14 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(
             icon: Image.asset(
               "assets/images/IconCardsOutline.png",
-              height: 40,
+              height: 30,
               errorBuilder:
                   (context, error, stackTrace) =>
                       const Icon(Icons.fitness_center),
             ),
             activeIcon: Image.asset(
               "assets/images/IconCardsSolid.png",
-              height: 50,
+              height: 35,
               errorBuilder:
                   (context, error, stackTrace) =>
                       const Icon(Icons.fitness_center),
@@ -411,30 +470,30 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(
             icon: Image.asset(
               "assets/images/IconProgressOutline.png",
-              height: 40,
+              height: 30,
             ),
             activeIcon: Image.asset(
               "assets/images/IconProgressSolid.png",
-              height: 50,
+              height: 35,
             ),
             label: 'Progreso',
           ),
           BottomNavigationBarItem(
             icon: Image.asset(
               "assets/images/IconRecordOutline.png",
-              height: 40,
+              height: 30,
             ),
             activeIcon: Image.asset(
               "assets/images/IconRecordSolid.png",
-              height: 50,
+              height: 35,
             ),
             label: 'Historial',
           ),
           BottomNavigationBarItem(
-            icon: Image.asset("assets/images/IconWaterOutline.png", height: 40),
+            icon: Image.asset("assets/images/IconWaterOutline.png", height: 30),
             activeIcon: Image.asset(
               "assets/images/IconWaterSolid.png",
-              height: 50,
+              height: 35,
             ),
             label: 'Hidratación',
           ),
