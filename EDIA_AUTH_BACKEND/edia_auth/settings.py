@@ -28,7 +28,7 @@ DEBUG = True
 
 
 #LOCALCHOST Y CONEXION CON FLUTTER
-ALLOWED_HOSTS = ['127.0.0.1','10.0.2.2']
+ALLOWED_HOSTS = ['127.0.0.1','10.0.2.2',]
 
 
 # Application definition
@@ -141,6 +141,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # RestFramework configuracion
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        'users.authentication.DevAuthentication', # Autenticación automática para desarrollo
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (

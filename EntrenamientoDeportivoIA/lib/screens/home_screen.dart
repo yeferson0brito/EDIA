@@ -36,7 +36,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() => _username = prefs.getString('username') ?? "Usuario");
+    // Si prefs.getString devuelve null (porque saltamos login), usamos "Admin (Dev)"
+    setState(() => _username = prefs.getString('username') ?? "Admin (Dev)");
   }
 
   Future<void> _logout(BuildContext context) async {
@@ -87,7 +88,91 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  //TARJETAS
+  //TARJETAS}
+  Widget _buildDailyTipCard() {
+    return Container(
+      height: 150,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Mitad Izquierda: Textos
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'CONSEJO DIARIO',
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF134E5E),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Texto de base que en el futuro sera comletado de manera automatica por IA',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Mitad Derecha: Imagen con efecto desvanecido
+          Expanded(
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(20),
+                      bottomRight: Radius.circular(20),
+                    ),
+                    child: Image.asset(
+                      'assets/images/CardEntrenaInteligente.png', // Imagen ilustrativa
+                      fit: BoxFit.cover,
+                      alignment: Alignment.centerRight,
+                    ),
+                  ),
+                ),
+                // Efecto de desvanecido hacia la izquierda (fondo blanco)
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [Colors.white, Colors.white.withOpacity(0.0)],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDashboardCard({
     required double height,
     required String title,
@@ -141,7 +226,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Image.asset(
                 'assets/images/IconDropdown.png',
                 height: 30,
-                
+
                 fit: BoxFit.contain,
               ),
             ),

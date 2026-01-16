@@ -14,9 +14,9 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     // Configura un temporizador de 3 segundos
     Timer(const Duration(seconds: 2), () {
-      // Navega a la ruta '/login' y reemplaza la vista actual para que no se pueda volver atrás
+      // MODO DESARROLLO: Navega directo a '/home' saltando el login
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/login');
+        Navigator.pushReplacementNamed(context, '/home');
       }
     });
   }
