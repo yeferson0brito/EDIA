@@ -256,7 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Tarjeta 1: Ancho completo
                 _buildDashboardCard(
                   height: 150,
-                  title: 'Resumen Diario',
+                  title: 'CONSEJO DIARIO',
                   icon: Icons.today,
                 ),
                 const SizedBox(height: 16),
