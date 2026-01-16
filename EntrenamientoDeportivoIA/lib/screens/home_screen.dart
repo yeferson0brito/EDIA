@@ -320,6 +320,155 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // TARJETA DE INTENSIDAD DEL DÍA (Reemplaza Próximo Entreno)
+  Widget _buildIntensityCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.bolt, color: Color(0xFF134E5E)),
+              const SizedBox(width: 10),
+              Text(
+                'Intensidad del día',
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF134E5E),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 15),
+          // Lista de ejercicios de ejemplo (Modelo Base)
+          _buildExerciseItem(Icons.directions_run, 'Elíptica', '30 min'),
+          const SizedBox(height: 10),
+          _buildExerciseItem(Icons.pool, 'Natación', '30 min'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExerciseItem(IconData icon, String name, String duration) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, size: 20, color: const Color(0xFF134E5E)),
+        ),
+        const SizedBox(width: 15),
+        Expanded(
+          child: Text(
+            name,
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+        Text(
+          duration,
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[600],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // TARJETA DE SUEÑO (Tips y Trucos)
+  Widget _buildSleepCard() {
+    return Container(
+      height: 150,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        image: const DecorationImage(
+          image: AssetImage('assets/images/ImageBoardSleep.png'),
+          fit: BoxFit.cover,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: [Colors.black.withOpacity(0.7), Colors.transparent],
+          ),
+        ),
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Tips y Trucos',
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              '¿Problemas para dormir? echa un vistazo',
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: Colors.white70,
+              ),
+            ),
+            const SizedBox(height: 15),
+            ElevatedButton(
+              onPressed: () {},
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: const Color(0xFF134E5E),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+                minimumSize: const Size(0, 35),
+              ),
+              child: Text(
+                'Conoce más',
+                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildDashboardCard({
     required double height,
     required String title,
@@ -431,6 +580,34 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             ListTile(
+              leading: const Icon(Icons.person, color: Color(0xFF134E5E)),
+              title: Text(
+                'Perfil',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF134E5E),
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.flag, color: Color(0xFF134E5E)),
+              title: Text(
+                'Metas',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF134E5E),
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.settings, color: Color(0xFF134E5E)),
               title: Text(
                 'Configuraciones',
@@ -501,12 +678,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                // Tarjeta 4: Ancho completo (Nueva)
-                _buildDashboardCard(
-                  height: 120,
-                  title: 'Próximo Entreno',
-                  icon: Icons.fitness_center,
-                ),
+                // Tarjeta 4: Intensidad del día (Reemplaza Próximo Entreno)
+                _buildIntensityCard(),
+                const SizedBox(height: 16),
+                // Tarjeta 5: Sueño / Tips
+                _buildSleepCard(),
               ],
             ),
           ),
