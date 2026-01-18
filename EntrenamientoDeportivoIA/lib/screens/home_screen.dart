@@ -426,41 +426,85 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Row(
           children: [
-            Text(
-              'Tips y Trucos',
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+            // SECCIÓN 1: INFORMACIÓN (FLEX 3)
+            Expanded(
+              flex: 3,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Consejos para dormir',
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    '¿Problemas para dormir? echa un vistazo',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: Colors.white70,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFF134E5E),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+                      minimumSize: const Size(0, 35),
+                    ),
+                    child: Text(
+                      'Conoce más',
+                      style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 5),
-            Text(
-              '¿Problemas para dormir? echa un vistazo',
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: Colors.white70,
-              ),
-            ),
-            const SizedBox(height: 15),
-            ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: const Color(0xFF134E5E),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
-                minimumSize: const Size(0, 35),
-              ),
-              child: Text(
-                'Conoce más',
-                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold),
+            // SECCIÓN 2: INDICADOR DE CALIDAD DE SUEÑO (FLEX 1)
+            Expanded(
+              flex: 1,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // BARRA DE GRADIENTE
+                  Container(
+                    width: 12,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.white24),
+                      gradient: const LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        stops: [0.0, 0.75, 1.0], // El azul domina hasta el 65% antes de volverse naranja
+                        colors: [
+                          Color(0xFF283593), // Azul Índigo (Más tranquilo y profundo)
+                          Color(0xFFFFB74D), // Naranja suave (Pastel)
+                          Color.fromARGB(255, 215, 89, 89), // Rojo suave (Pastel)
+                        ],
+                      ),
+                    ),
+                  ),
+                  // FLECHA INDICADORA
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.start, // Apunta arriba (Azul)
+                    children: const [
+                       SizedBox(height: 10), // Ajuste para alinear con la zona azul
+                       Icon(Icons.arrow_left, color: Colors.white, size: 24),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],
@@ -723,7 +767,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed, // Necesario para más de 3 items
-        backgroundColor: Colors.grey[300],
+        backgroundColor: Colors.grey[200],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         selectedLabelStyle: GoogleFonts.montserrat(fontWeight: FontWeight.bold),
