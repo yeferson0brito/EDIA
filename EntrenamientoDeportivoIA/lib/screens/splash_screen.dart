@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'package:flutter_svg/flutter_svg.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -29,8 +28,8 @@ class _SplashScreenState extends State<SplashScreen> {
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(30.0),
-          child: SvgPicture.asset(
-            "assets/images/ImagenesAntesdeEdicion/LogoNEMA.png",
+          child: Image.asset(
+            "assets/images/LogoNEMA.png",
           ),
         ),
       ),
