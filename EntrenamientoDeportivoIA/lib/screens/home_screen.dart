@@ -41,11 +41,16 @@ class _HomeScreenState extends State<HomeScreen> {
   final int _waterGoal = 3200;
   bool _waterGoalReached = false;
 
+  // Variables para datos físicos del usuario
+  double? _userHeight; // en cm
+  double? _userWeight; // en kg
+
   @override
   void initState() {
     super.initState();
     _confettiController = ConfettiController(duration: const Duration(seconds: 3));
     _loadUserData();
+    _loadUserPhysicalData();
     _loadHydrationData();
     _initPedometer();
     _pageController = PageController();
@@ -168,6 +173,14 @@ class _HomeScreenState extends State<HomeScreen> {
     // Actualizar fecha por si acaso
     String today = DateTime.now().toString().substring(0, 10);
     await prefs.setString('lastWaterDate', today);
+  }
+
+  Future<void> _loadUserPhysicalData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userHeight = prefs.getDouble('userHeight');
+      _userWeight = prefs.getDouble('userWeight');
+    });
   }
 
   Future<void> _loadUserData() async {
@@ -314,7 +327,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildStepsCard() {
     double progress = (_steps / _stepGoal).clamp(0.0, 1.0);
 
-    return Container(
+    return GestureDetector(
+      onTap: _showStepsDetailDialog,
+      child: Container(
       height: 150,
       decoration: BoxDecoration(
         color: Colors.white,
@@ -374,6 +389,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }
@@ -688,7 +704,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // TARJETA DE INTENSIDAD DEL DÍA (Reemplaza Próximo Entreno)
   Widget _buildIntensityCard() {
-    return Container(
+    return GestureDetector(
+      onTap: _showIntensityDetailDialog,
+      child: Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -726,6 +744,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildExerciseItem(Icons.pool, 'Natación', '30 min'),
         ],
       ),
+    ),
     );
   }
 
@@ -760,6 +779,193 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  // --- DIALOGO DE DETALLE DE PASOS ---
+  void _showStepsDetailDialog() {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.4),
+      builder: (BuildContext context) {
+        double progress = (_steps / _stepGoal).clamp(0.0, 1.0);
+        double km;
+        int calories;
+
+        // Camino 1: Si hay datos de usuario, usar cálculos personalizados
+        if (_userHeight != null && _userWeight != null) {
+          // Zancada = altura * 0.415. Dividimos por 100 para m, luego por 1000 para km.
+          double strideInMeters = (_userHeight! * 0.415) / 100;
+          km = (_steps * strideInMeters) / 1000;
+          // Calorías: Estimación simple basada en peso. (Ej: 0.0005 kcal por paso por kg)
+          calories = (_steps * _userWeight! * 0.0005).toInt();
+        } else {
+          // Camino 2: Si no hay login (modo dev), usar estimaciones generales
+          km = _steps * 0.000762; // Zancada promedio de 76.2cm
+          calories = (_steps * 0.04).toInt(); // 0.04 kcal por paso
+        }
+
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          child: Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            backgroundColor: Colors.white,
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              width: MediaQuery.of(context).size.width * 0.85,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Detalle de Pasos',
+                    style: GoogleFonts.poppins(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF134E5E),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    height: 120,
+                    width: 120,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SizedBox(
+                          height: 120,
+                          width: 120,
+                          child: CircularProgressIndicator(
+                            value: progress,
+                            strokeWidth: 10,
+                            backgroundColor: Colors.grey[200],
+                            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF134E5E)),
+                          ),
+                        ),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.directions_walk, size: 30, color: Color(0xFF134E5E)),
+                            Text(
+                              '$_steps',
+                              style: GoogleFonts.poppins(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF134E5E),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildStatItem(Icons.map, '${km.toStringAsFixed(2)} km', 'Distancia'),
+                      _buildStatItem(Icons.local_fire_department, '$calories kcal', 'Calorías'),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(
+                      'Cerrar',
+                      style: GoogleFonts.poppins(color: Colors.grey),
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildStatItem(IconData icon, String value, String label) {
+    return Column(
+      children: [
+        Icon(icon, color: Colors.grey[600], size: 24),
+        const SizedBox(height: 5),
+        Text(
+          value,
+          style: GoogleFonts.poppins(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF134E5E),
+          ),
+        ),
+        Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontSize: 12,
+            color: Colors.grey[500],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // --- DIALOGO DE INTENSIDAD ---
+  void _showIntensityDetailDialog() {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.4),
+      builder: (BuildContext context) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          child: Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            backgroundColor: Colors.white,
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              width: MediaQuery.of(context).size.width * 0.85,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Intensidad del Día',
+                    style: GoogleFonts.poppins(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF134E5E),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Ejercicios recomendados basados en tu nivel',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 20),
+                  // Lista expandida de ejemplo
+                  _buildExerciseItem(Icons.directions_run, 'Elíptica', '30 min'),
+                  const SizedBox(height: 10),
+                  _buildExerciseItem(Icons.pool, 'Natación', '30 min'),
+                  const SizedBox(height: 10),
+                  _buildExerciseItem(Icons.fitness_center, 'Pesas', '20 min'),
+                  const SizedBox(height: 10),
+                  _buildExerciseItem(Icons.self_improvement, 'Yoga', '15 min'),
+                  
+                  const SizedBox(height: 20),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(
+                      'Cerrar',
+                      style: GoogleFonts.poppins(color: Colors.grey),
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 

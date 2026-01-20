@@ -105,8 +105,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
       final double? height = double.tryParse(_heightController.text);
       final double? weight = double.tryParse(_weightController.text);
 
+      // Guardar datos físicos en SharedPreferences para uso local en la app
+      if (height != null) await prefs.setDouble('userHeight', height);
+      if (weight != null) await prefs.setDouble('userWeight', weight);
       
-
       print("Enviando datos a $_apiUrl");
 
       final response = await http.post( // Cambiado a POST según especificación
