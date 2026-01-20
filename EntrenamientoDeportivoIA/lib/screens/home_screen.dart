@@ -34,11 +34,12 @@ class _HomeScreenState extends State<HomeScreen> {
   final int _stepGoal = 100; // Objetivo solicitado
   
   late ConfettiController _confettiController;
-  bool _goalReached = false;
+  bool _stepGoalReached = false;
 
   // Variables para Hidratación
   int _waterIntake = 0;
   final int _waterGoal = 3200;
+  bool _waterGoalReached = false;
 
   @override
   void initState() {
@@ -70,7 +71,10 @@ class _HomeScreenState extends State<HomeScreen> {
       _steps = 0;
       _lastDate = today;
       _lastSensorReading = -1;
+      _stepGoalReached = false;
       await _saveStepData();
+    } else {
+      _stepGoalReached = _steps >= _stepGoal;
     }
 
     setState(() {}); // Actualizar UI con datos cargados
@@ -112,8 +116,8 @@ class _HomeScreenState extends State<HomeScreen> {
       }
 
       // Verificar meta de pasos para confeti
-      if (_steps >= _stepGoal && !_goalReached) {
-        _goalReached = true;
+      if (_steps >= _stepGoal && !_stepGoalReached) {
+        _stepGoalReached = true;
         _confettiController.play();
       }
     });
@@ -140,10 +144,12 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       if (savedDate != today) {
         _waterIntake = 0; // Reiniciar si es otro día
+        _waterGoalReached = false;
         prefs.setString('lastWaterDate', today);
         prefs.setInt('dailyWater', 0);
       } else {
         _waterIntake = prefs.getInt('dailyWater') ?? 0;
+        _waterGoalReached = _waterIntake >= _waterGoal;
       }
     });
   }
@@ -151,6 +157,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _addWater(int amount) async {
     setState(() {
       _waterIntake += amount;
+      if (_waterIntake >= _waterGoal && !_waterGoalReached) {
+        _waterGoalReached = true;
+        _confettiController.play();
+      }
     });
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('dailyWater', _waterIntake);
@@ -520,8 +530,8 @@ class _HomeScreenState extends State<HomeScreen> {
           _addWater(amount);
           Navigator.pop(context);
         } else {
-          // Lógica futura para cantidad personalizada
           Navigator.pop(context);
+          _showCustomWaterSlider();
         }
       },
       child: Column(
@@ -546,6 +556,133 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showCustomWaterSlider() {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.4),
+      builder: (BuildContext context) {
+        double currentVal = 250; // Valor inicial
+        const double maxVal = 3000;
+
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              return Dialog(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                backgroundColor: Colors.white,
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  height: 450,
+                  width: MediaQuery.of(context).size.width * 0.85,
+                  child: Column(
+                    children: [
+                      Text(
+                        'Personalizar',
+                        style: GoogleFonts.poppins(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF134E5E),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Desliza para ajustar',
+                        style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 20),
+                      Expanded(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // BARRA TIPO VOLUMEN
+                            GestureDetector(
+                              onVerticalDragUpdate: (details) {
+                                setState(() {
+                                  currentVal -= details.delta.dy * 2; // Sensibilidad
+                                  currentVal = currentVal.clamp(0.0, maxVal);
+                                });
+                              },
+                              child: Container(
+                                width: 70,
+                                height: 280,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[200],
+                                  borderRadius: BorderRadius.circular(35),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(35),
+                                  child: _WaterWaveWidget(
+                                    percentage: currentVal / maxVal,
+                                    color: Colors.blue,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 40),
+                            // NUMERO A LA DERECHA
+                            SizedBox(
+                              width: 120, // Ancho fijo para evitar que la barra se mueva al cambiar los dígitos
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${currentVal.toInt()}',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 42,
+                                      fontWeight: FontWeight.bold,
+                                      color: const Color(0xFF134E5E),
+                                    ),
+                                  ),
+                                  Text(
+                                    'ml',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.grey[400],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text('Cancelar', style: GoogleFonts.poppins(color: Colors.grey)),
+                          ),
+                          ElevatedButton(
+                            onPressed: () {
+                              _addWater(currentVal.toInt());
+                              Navigator.pop(context);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF134E5E),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: Text('Agregar', style: GoogleFonts.poppins(color: Colors.white)),
+                          ),
+                        ],
+                      )
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
@@ -1104,4 +1241,97 @@ class _ArcPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _WaterWaveWidget extends StatefulWidget {
+  final double percentage;
+  final Color color;
+
+  const _WaterWaveWidget({required this.percentage, required this.color});
+
+  @override
+  State<_WaterWaveWidget> createState() => _WaterWaveWidgetState();
+}
+
+class _WaterWaveWidgetState extends State<_WaterWaveWidget> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return CustomPaint(
+          painter: _WavePainter(
+            percentage: widget.percentage,
+            animationValue: _controller.value,
+            color: widget.color,
+          ),
+          child: Container(),
+        );
+      },
+    );
+  }
+}
+
+class _WavePainter extends CustomPainter {
+  final double percentage;
+  final double animationValue;
+  final Color color;
+
+  _WavePainter({required this.percentage, required this.animationValue, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+    final double waterHeight = size.height * percentage;
+    final double baseHeight = size.height - waterHeight;
+
+    if (percentage == 0) return;
+    if (percentage == 1) {
+      canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
+      return;
+    }
+
+    path.moveTo(0, baseHeight);
+    
+    
+    double amplitude = 3.5;
+    double frequency = 1.5; 
+    
+    for (double x = 0; x <= size.width; x++) {
+      double y = amplitude * math.sin((x / size.width * 2 * math.pi * frequency) + (animationValue * 2 * math.pi));
+      path.lineTo(x, baseHeight + y);
+    }
+
+    path.lineTo(size.width, size.height);
+    path.lineTo(0, size.height);
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _WavePainter oldDelegate) {
+    return oldDelegate.percentage != percentage || oldDelegate.animationValue != animationValue;
+  }
 }
