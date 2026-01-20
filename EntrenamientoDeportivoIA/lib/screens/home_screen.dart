@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'dart:ui'; // Para ImageFilter (Blur)
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pedometer/pedometer.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:confetti/confetti.dart';
 
 import 'progress_screen.dart';
 import 'record_screen.dart';
@@ -30,11 +32,20 @@ class _HomeScreenState extends State<HomeScreen> {
   int _lastSensorReading = -1; // Última lectura del sensor guardada
   String _lastDate = ""; // Fecha de la última actualización
   final int _stepGoal = 100; // Objetivo solicitado
+  
+  late ConfettiController _confettiController;
+  bool _goalReached = false;
+
+  // Variables para Hidratación
+  int _waterIntake = 0;
+  final int _waterGoal = 3200;
 
   @override
   void initState() {
     super.initState();
+    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
     _loadUserData();
+    _loadHydrationData();
     _initPedometer();
     _pageController = PageController();
   }
@@ -42,6 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _pageController.dispose();
+    _confettiController.dispose();
     super.dispose();
   }
 
@@ -98,6 +110,12 @@ class _HomeScreenState extends State<HomeScreen> {
         _steps += delta;
         _lastSensorReading = sensorSteps;
       }
+
+      // Verificar meta de pasos para confeti
+      if (_steps >= _stepGoal && !_goalReached) {
+        _goalReached = true;
+        _confettiController.play();
+      }
     });
     _saveStepData();
   }
@@ -111,6 +129,35 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _onStepCountError(error) {
     print('Error en podómetro: $error');
+  }
+
+  // --- LÓGICA DE HIDRATACIÓN ---
+  Future<void> _loadHydrationData() async {
+    final prefs = await SharedPreferences.getInstance();
+    String today = DateTime.now().toString().substring(0, 10);
+    String savedDate = prefs.getString('lastWaterDate') ?? today;
+
+    setState(() {
+      if (savedDate != today) {
+        _waterIntake = 0; // Reiniciar si es otro día
+        prefs.setString('lastWaterDate', today);
+        prefs.setInt('dailyWater', 0);
+      } else {
+        _waterIntake = prefs.getInt('dailyWater') ?? 0;
+      }
+    });
+  }
+
+  Future<void> _addWater(int amount) async {
+    setState(() {
+      _waterIntake += amount;
+    });
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('dailyWater', _waterIntake);
+    
+    // Actualizar fecha por si acaso
+    String today = DateTime.now().toString().substring(0, 10);
+    await prefs.setString('lastWaterDate', today);
   }
 
   Future<void> _loadUserData() async {
@@ -323,6 +370,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // TARJETA DE HIDRATACIÓN (Reemplaza Calorías)
   Widget _buildHydrationCard() {
+    double progress = (_waterIntake / _waterGoal).clamp(0.0, 1.0);
+
     return Container(
       height: 150,
       decoration: BoxDecoration(
@@ -350,7 +399,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 const SizedBox(height: 5),
                 Text(
-                  '48%',
+                  '${(progress * 100).toInt()}%',
                   style: GoogleFonts.poppins(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -358,7 +407,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 Text(
-                  '1250ml / 3200ml',
+                  '${_waterIntake}ml / ${_waterGoal}ml',
                   style: GoogleFonts.poppins(
                     fontSize: 10,
                     color: Colors.grey[400],
@@ -375,24 +424,124 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       CustomPaint(
                         size: const Size(80, 40),
-                        painter: _ArcPainter(),
+                        painter: _ArcPainter(progress: progress),
                       ),
                       Positioned(
                         bottom: 0,
-                        child: Container(
-                          height: 35,
-                          width: 35,
-                          decoration: const BoxDecoration(
-                            color: Colors.blue,
-                            shape: BoxShape.circle,
+                        child: GestureDetector(
+                          onTap: _showCupSelectionDialog,
+                          child: Container(
+                            height: 35,
+                            width: 35,
+                            decoration: const BoxDecoration(
+                              color: Colors.blue,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.add, color: Colors.white, size: 20),
                           ),
-                          child: const Icon(Icons.add, color: Colors.white, size: 20),
                         ),
                       ),
                     ],
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- DIALOGO DE SELECCIÓN DE TAZA ---
+  void _showCupSelectionDialog() {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.4), // Opacidad del fondo
+      builder: (BuildContext context) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5), // Difuminado
+          child: Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            backgroundColor: Colors.white,
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              width: MediaQuery.of(context).size.width * 0.85,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Cambiar Taza',
+                    style: GoogleFonts.poppins(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF134E5E),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  GridView.count(
+                    shrinkWrap: true,
+                    crossAxisCount: 3,
+                    mainAxisSpacing: 15,
+                    crossAxisSpacing: 15,
+                    childAspectRatio: 0.8,
+                    children: [
+                      _buildCupOption(Icons.coffee, '100 ml', 100),
+                      _buildCupOption(Icons.local_drink, '200 ml', 200),
+                      _buildCupOption(Icons.emoji_food_beverage, '300 ml', 300),
+                      _buildCupOption(Icons.water_drop, '400 ml', 400),
+                      _buildCupOption(Icons.water_drop_outlined, '500 ml', 500), // Icono más grande visualmente
+                      _buildCupOption(Icons.local_bar, '1000 ml', 1000),
+                      _buildCupOption(Icons.add_circle_outline, 'Otro', 0),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(
+                      'Cancelar',
+                      style: GoogleFonts.poppins(color: Colors.grey),
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCupOption(IconData icon, String label, int amount) {
+    return GestureDetector(
+      onTap: () {
+        if (amount > 0) {
+          _addWater(amount);
+          Navigator.pop(context);
+        } else {
+          // Lógica futura para cantidad personalizada
+          Navigator.pop(context);
+        }
+      },
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.blue.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: Colors.blue, size: 28),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey[700],
             ),
           ),
         ],
@@ -813,30 +962,46 @@ class _HomeScreenState extends State<HomeScreen> {
         },
         children: [
           SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
+            child: Stack(
               children: [
-                // Tarjeta 1: Ancho completo
-                _buildDailyTipCard(),
-                const SizedBox(height: 16),
-                // Fila de 2 tarjetas (50% cada una)
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildHydrationCard(),
-                    ),
-                    const SizedBox(width: 16), // Espacio entre ellas
-                    Expanded(
-                      child: _buildStepsCard(),
-                    ),
-                  ],
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      // Tarjeta 1: Ancho completo
+                      _buildDailyTipCard(),
+                      const SizedBox(height: 16),
+                      // Fila de 2 tarjetas (50% cada una)
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildHydrationCard(),
+                          ),
+                          const SizedBox(width: 16), // Espacio entre ellas
+                          Expanded(
+                            child: _buildStepsCard(),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Tarjeta 4: Intensidad del día (Reemplaza Próximo Entreno)
+                      _buildIntensityCard(),
+                      const SizedBox(height: 16),
+                      // Tarjeta 5: Sueño / Tips
+                      _buildSleepCard(),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 16),
-                // Tarjeta 4: Intensidad del día (Reemplaza Próximo Entreno)
-                _buildIntensityCard(),
-                const SizedBox(height: 16),
-                // Tarjeta 5: Sueño / Tips
-                _buildSleepCard(),
+                // Confetti Widget en la parte superior del Stack
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: ConfettiWidget(
+                    confettiController: _confettiController,
+                    blastDirectionality: BlastDirectionality.explosive,
+                    shouldLoop: false,
+                    colors: const [Colors.green, Colors.blue, Colors.pink, Colors.orange, Colors.purple],
+                  ),
+                ),
               ],
             ),
           ),
@@ -910,6 +1075,10 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class _ArcPainter extends CustomPainter {
+  final double progress;
+
+  _ArcPainter({required this.progress});
+
   @override
   void paint(Canvas canvas, Size size) {
     final Paint trackPaint = Paint()
@@ -930,7 +1099,7 @@ class _ArcPainter extends CustomPainter {
     canvas.drawArc(rect, math.pi, math.pi, false, trackPaint);
     
     // Dibuja el progreso (48% del arco)
-    canvas.drawArc(rect, math.pi, math.pi * 0.48, false, progressPaint);
+    canvas.drawArc(rect, math.pi, math.pi * progress, false, progressPaint);
   }
 
   @override
