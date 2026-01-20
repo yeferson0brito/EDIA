@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:pedometer/pedometer.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'progress_screen.dart';
 import 'record_screen.dart';
@@ -22,10 +24,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<String> _titles = ['NEMA', 'PROGRESO', 'HISTORIAL', 'HIDRATACIÓN'];
 
+  // Variables para el podómetro
+  late Stream<StepCount> _stepCountStream;
+  int _steps = 0;
+  int _lastSensorReading = -1; // Última lectura del sensor guardada
+  String _lastDate = ""; // Fecha de la última actualización
+  final int _stepGoal = 100; // Objetivo solicitado
+
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _initPedometer();
     _pageController = PageController();
   }
 
@@ -33,6 +43,74 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _pageController.dispose();
     super.dispose();
+  }
+
+  Future<void> _initPedometer() async {
+    // Cargar datos guardados
+    final prefs = await SharedPreferences.getInstance();
+    _steps = prefs.getInt('dailySteps') ?? 0;
+    _lastSensorReading = prefs.getInt('lastSensorReading') ?? -1;
+    _lastDate = prefs.getString('lastDate') ?? DateTime.now().toString().substring(0, 10);
+
+    // Verificar si cambió el día
+    String today = DateTime.now().toString().substring(0, 10);
+    if (_lastDate != today) {
+      _steps = 0;
+      _lastDate = today;
+      _lastSensorReading = -1;
+      await _saveStepData();
+    }
+
+    setState(() {}); // Actualizar UI con datos cargados
+
+    // Solicitar permisos de actividad física (necesario para Android 10+)
+    var status = await Permission.activityRecognition.status;
+    if (status.isDenied || status.isRestricted || status.isPermanentlyDenied) {
+      status = await Permission.activityRecognition.request();
+    }
+
+    if (status.isGranted) {
+      _stepCountStream = Pedometer.stepCountStream;
+      _stepCountStream.listen(_onStepCount).onError(_onStepCountError);
+    }
+  }
+
+  void _onStepCount(StepCount event) {
+    int sensorSteps = event.steps;
+    String today = DateTime.now().toString().substring(0, 10);
+
+    setState(() {
+      if (_lastDate != today) {
+        // Nuevo día: reiniciar
+        _steps = 0;
+        _lastDate = today;
+        _lastSensorReading = sensorSteps;
+      } else {
+        // Mismo día: acumular diferencia
+        if (_lastSensorReading == -1) {
+          _lastSensorReading = sensorSteps;
+        }
+        int delta = sensorSteps - _lastSensorReading;
+        // Detectar reinicio del dispositivo (delta negativo)
+        if (delta < 0) {
+          delta = sensorSteps;
+        }
+        _steps += delta;
+        _lastSensorReading = sensorSteps;
+      }
+    });
+    _saveStepData();
+  }
+
+  Future<void> _saveStepData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('dailySteps', _steps);
+    await prefs.setInt('lastSensorReading', _lastSensorReading);
+    await prefs.setString('lastDate', _lastDate);
+  }
+
+  void _onStepCountError(error) {
+    print('Error en podómetro: $error');
   }
 
   Future<void> _loadUserData() async {
@@ -177,6 +255,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // TARJETA DE PASOS (Diseño Circular)
   Widget _buildStepsCard() {
+    double progress = (_steps / _stepGoal).clamp(0.0, 1.0);
+
     return Container(
       height: 150,
       decoration: BoxDecoration(
@@ -210,7 +290,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 60,
                 width: 60,
                 child: CircularProgressIndicator(
-                  value: 5200 / 8000, // Ejemplo estático: 65% completado
+                  value: progress,
                   strokeWidth: 6,
                   backgroundColor: Colors.grey[200],
                   valueColor:
@@ -219,7 +299,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               // Contador en el medio
               Text(
-                '5200',
+                '$_steps',
                 style: GoogleFonts.poppins(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -230,7 +310,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Objetivo: 8000',
+            'Objetivo: $_stepGoal',
             style: GoogleFonts.poppins(
               fontSize: 12,
               color: Colors.grey[600],
