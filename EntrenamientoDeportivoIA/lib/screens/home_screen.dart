@@ -66,14 +66,27 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _confettiController = ConfettiController(duration: const Duration(seconds: 3));
-    _loadUserData();
-    _loadUserPhysicalData();
-    _loadHydrationData();
-    _loadSleepPreferences(); // Cargar preferencias de sueño
-    _initNotifications();
-    _initPedometer();
-    _startClock();
     _pageController = PageController();
+    _startClock();
+    // Iniciamos la carga secuencial para evitar colisión de permisos
+    _initDashboard();
+  }
+
+  Future<void> _initDashboard() async {
+    // 1. Cargar preferencias y datos locales (Rápido, sin UI)
+    await _loadUserData();
+    await _loadUserPhysicalData();
+    await _loadHydrationData();
+    await _loadSleepPreferences();
+
+    // 2. Inicializar notificaciones (Puede abrir diálogo de permiso)
+    await _initNotifications();
+
+    // 3. Esperar un momento para asegurar que el sistema esté listo para el siguiente permiso
+    if (mounted) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      await _initPedometer(); // Solicita permiso de actividad física
+    }
   }
 
   @override
@@ -116,12 +129,37 @@ class _HomeScreenState extends State<HomeScreen> {
       iOS: initializationSettingsDarwin,
     );
 
-    await _notificationsPlugin.initialize(initializationSettings);
+    await _notificationsPlugin.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) {
+        if (response.payload == 'ALARM') {
+          _showAlarmScreen();
+        }
+      },
+    );
+
+    // Verificar si la app se abrió automáticamente por la alarma (Full Screen Intent)
+    final NotificationAppLaunchDetails? launchDetails = await _notificationsPlugin.getNotificationAppLaunchDetails();
+    if (launchDetails?.didNotificationLaunchApp ?? false) {
+      if (launchDetails?.notificationResponse?.payload == 'ALARM') {
+        Future.delayed(Duration.zero, () => _showAlarmScreen());
+      }
+    }
 
     // FIX: Solicitar permiso de notificaciones explícitamente (Obligatorio para Android 13+)
     if (Platform.isAndroid) {
       await Permission.notification.request();
     }
+  }
+
+  void _showAlarmScreen() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AlarmScreen(onStop: () async {
+          await _notificationsPlugin.cancel(101); // 101 es el ID de la alarma
+        }),
+      ),
+    );
   }
 
   Future<void> _scheduleSleepNotifications() async {
@@ -167,10 +205,13 @@ class _HomeScreenState extends State<HomeScreen> {
       soundName != null ? 'alarm_channel_v2' : 'sleep_channel_v2', // FIX: Cambiar ID para resetear configuración antigua
       soundName != null ? 'Alarma Despertador' : 'Recordatorio de Sueño',
       channelDescription: soundName != null ? 'Canal para alarma con sonido' : 'Canal silencioso',
-      importance: Importance.max,
-      priority: Priority.high,
+      importance: Importance.max, // Máxima importancia para que suene fuerte
+      priority: Priority.max, // Máxima prioridad
       playSound: true,
       sound: soundName != null ? RawResourceAndroidNotificationSound(soundName) : null,
+      fullScreenIntent: soundName != null, // ESTO ABRE LA APP AUTOMÁTICAMENTE
+      category: soundName != null ? AndroidNotificationCategory.alarm : null,
+      visibility: NotificationVisibility.public,
       audioAttributesUsage: soundName != null ? AudioAttributesUsage.alarm : AudioAttributesUsage.notification,
     );
 
@@ -182,6 +223,7 @@ class _HomeScreenState extends State<HomeScreen> {
         androidAllowWhileIdle: true,
         uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: DateTimeComponents.time,
+        payload: soundName != null ? 'ALARM' : 'NORMAL', // Identificador para saber qué pantalla abrir
       );
     } on PlatformException catch (e) {
       if (e.code == 'exact_alarms_not_permitted') {
@@ -1947,5 +1989,92 @@ class _WavePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _WavePainter oldDelegate) {
     return oldDelegate.percentage != percentage || oldDelegate.animationValue != animationValue;
+  }
+}
+
+// --- PANTALLA DE ALARMA (SLIDE TO STOP) ---
+class AlarmScreen extends StatefulWidget {
+  final VoidCallback onStop;
+  const AlarmScreen({super.key, required this.onStop});
+
+  @override
+  State<AlarmScreen> createState() => _AlarmScreenState();
+}
+
+class _AlarmScreenState extends State<AlarmScreen> {
+  double _dragValue = 0.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF134E5E),
+      body: SafeArea(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Spacer(),
+            const Icon(Icons.alarm, size: 80, color: Colors.white),
+            const SizedBox(height: 20),
+            Text(
+              "¡Buenos días!",
+              style: GoogleFonts.poppins(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+            Text(
+              "Hora de despertar",
+              style: GoogleFonts.poppins(fontSize: 18, color: Colors.white70),
+            ),
+            const Spacer(),
+            // SLIDER PERSONALIZADO
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 50),
+              child: Container(
+                height: 70,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(35),
+                ),
+                child: Stack(
+                  alignment: Alignment.centerLeft,
+                  children: [
+                    Center(
+                      child: Text(
+                        "Desliza para apagar  >>>",
+                        style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.8), fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                    SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        trackHeight: 0,
+                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 25),
+                        overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
+                        thumbColor: Colors.white,
+                        activeTrackColor: Colors.transparent,
+                        inactiveTrackColor: Colors.transparent,
+                      ),
+                      child: Slider(
+                        value: _dragValue,
+                        onChanged: (val) {
+                          setState(() => _dragValue = val);
+                        },
+                        onChangeEnd: (val) {
+                          if (val > 0.8) {
+                            // Si deslizó más del 80%, apagar alarma
+                            widget.onStop();
+                            Navigator.pop(context);
+                          } else {
+                            // Si no, regresar el botón al inicio
+                            setState(() => _dragValue = 0.0);
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
