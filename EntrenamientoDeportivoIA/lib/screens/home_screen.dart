@@ -345,11 +345,13 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          const Icon(Icons.directions_walk, color: Color(0xFF134E5E)),
+          const SizedBox(width: 10),
           Text(
             'Pasos',
             style: GoogleFonts.poppins(
               fontSize: 18,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
               color: const Color(0xFF134E5E),
             ),
           ),
@@ -737,11 +739,30 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 5),
           // Lista de ejercicios de ejemplo (Modelo Base)
-          _buildExerciseItem(Icons.directions_run, 'Elíptica', '30 min'),
-          const SizedBox(height: 10),
+          _buildExerciseItem(Icons.directions_run, 'Caminata', '30 min'),
+          const SizedBox(height: 5),
           _buildExerciseItem(Icons.pool, 'Natación', '30 min'),
+          const SizedBox(height: 5),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Detalles',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  color: const Color(0xFF134E5E).withOpacity(0.8),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(width: 5), 
+              const Icon(
+                Icons.more_horiz,
+                color: Color(0xFF134E5E),
+              ),
+            ],
+          ),
         ],
       ),
     ),
