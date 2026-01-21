@@ -1018,6 +1018,7 @@ class _HomeScreenState extends State<HomeScreen> {
     String message = "";
     String title = "";
     Duration remaining;
+    String bgImage = "";
     
     // Lógica de estados
     if (now.isAfter(todaySleep) && now.isBefore(todayWake)) {
@@ -1051,7 +1052,19 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
 
-    String countdown = "${remaining.inHours}h ${remaining.inMinutes.remainder(60)}m ${remaining.inSeconds.remainder(60)}s";
+    // Selección de imagen según la hora
+    int hour = now.hour;
+    if (hour >= 6 && hour < 12) {
+      bgImage = 'assets/images/ImageBoardSleepMorning.png';
+    } else if (hour >= 12 && hour < 16) {
+      bgImage = 'assets/images/ImageBoardSleepMidday.png';
+    } else if (hour >= 16 && hour < 20) {
+      bgImage = 'assets/images/ImageBoardSleepAfternoon.png';
+    } else {
+      bgImage = 'assets/images/ImageBoardSleep.png';
+    }
+
+    String countdown = "${remaining.inHours}h ${remaining.inMinutes.remainder(60)}m";
 
     return GestureDetector(
       onTap: _showSleepDetailDialog,
@@ -1060,8 +1073,8 @@ class _HomeScreenState extends State<HomeScreen> {
         width: double.infinity,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          image: const DecorationImage(
-            image: AssetImage('assets/images/ImageBoardSleepMidday.png'),
+          image: DecorationImage(
+            image: AssetImage(bgImage),
             fit: BoxFit.cover,
           ),
           boxShadow: [
