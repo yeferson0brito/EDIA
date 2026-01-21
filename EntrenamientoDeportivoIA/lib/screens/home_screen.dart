@@ -7,7 +7,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:pedometer/pedometer.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:confetti/confetti.dart';
-
 import 'progress_screen.dart';
 import 'record_screen.dart';
 import 'hydration_screen.dart';
