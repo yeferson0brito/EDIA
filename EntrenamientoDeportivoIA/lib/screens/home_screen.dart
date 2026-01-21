@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui'; // Para ImageFilter (Blur)
 import 'package:shared_preferences/shared_preferences.dart';
@@ -45,6 +46,10 @@ class _HomeScreenState extends State<HomeScreen> {
   double? _userHeight; // en cm
   double? _userWeight; // en kg
 
+  // Timer para actualizar la tarjeta de sueño en tiempo real
+  Timer? _timer;
+  DateTime _currentTime = DateTime.now();
+
   @override
   void initState() {
     super.initState();
@@ -53,14 +58,26 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadUserPhysicalData();
     _loadHydrationData();
     _initPedometer();
+    _startClock();
     _pageController = PageController();
   }
 
   @override
   void dispose() {
+    _timer?.cancel();
     _pageController.dispose();
     _confettiController.dispose();
     super.dispose();
+  }
+
+  void _startClock() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          _currentTime = DateTime.now();
+        });
+      }
+    });
   }
 
   Future<void> _initPedometer() async {
@@ -990,118 +1007,242 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // TARJETA DE SUEÑO (Tips y Trucos)
+  // TARJETA DE SUEÑO (Métricas y Registro)
   Widget _buildSleepCard() {
-    return Container(
-      height: 150,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        image: const DecorationImage(
-          image: AssetImage('assets/images/ImageBoardSleep.png'),
-          fit: BoxFit.cover,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
+    DateTime now = _currentTime;
+    
+    // Definir horario de sueño (1:00 AM - 7:00 AM)
+    DateTime todaySleep = DateTime(now.year, now.month, now.day, 1, 0); 
+    DateTime todayWake = DateTime(now.year, now.month, now.day, 7, 0);
+    
+    String message = "";
+    String title = "";
+    Duration remaining;
+    
+    // Lógica de estados
+    if (now.isAfter(todaySleep) && now.isBefore(todayWake)) {
+      // CASO 5: En horario de sueño (01:00 - 07:00)
+      message = "¡Ey!, Deberias estar durmiendo, todo bien?";
+      title = "Tiempo hasta tu hora de levantarse";
+      remaining = todayWake.difference(now);
+    } else {
+      // Horario despierto
+      title = "Tiempo hasta tu hora de dormir";
+      
+      // Calcular próxima hora de dormir
+      DateTime nextSleep = (now.isBefore(todaySleep)) 
+          ? todaySleep // Si es 00:30, la hora es hoy a la 1:00
+          : todaySleep.add(const Duration(days: 1)); // Si es 08:00, es mañana a la 1:00
+          
+      remaining = nextSleep.difference(now);
+      
+      if (remaining.inHours < 1) {
+        // CASO 4: Menos de 1 hora
+        message = "Hora de ir a la cama";
+      } else if (remaining.inHours < 4) {
+        // CASO 3: Menos de 4 horas
+        message = "Se aproxima la hora del sueño, ¿nos preparamos?";
+      } else if (now.hour >= 7 && now.hour < 12) {
+        // CASO 1: Mañana (07:00 - 12:00)
+        message = "Buenos dias!";
+      } else {
+        // CASO 2: Tarde (12:00 - 21:00 aprox)
+        message = "¡Hey!, Se nos va el día.";
+      }
+    }
+
+    String countdown = "${remaining.inHours}h ${remaining.inMinutes.remainder(60)}m ${remaining.inSeconds.remainder(60)}s";
+
+    return GestureDetector(
+      onTap: _showSleepDetailDialog,
       child: Container(
+        height: 150,
+        width: double.infinity,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          gradient: LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: [Colors.black.withOpacity(0.7), Colors.transparent],
+          image: const DecorationImage(
+            image: AssetImage('assets/images/ImageBoardSleep.png'),
+            fit: BoxFit.cover,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
         ),
-        padding: const EdgeInsets.all(20.0),
-        child: Row(
-          children: [
-            // SECCIÓN 1: INFORMACIÓN (FLEX 3)
-            Expanded(
-              flex: 3,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [Colors.black.withOpacity(0.8), Colors.transparent],
+            ),
+          ),
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
                 children: [
+                  const Icon(Icons.bedtime, color: Colors.white, size: 24),
+                  const SizedBox(width: 10),
                   Text(
-                    'Consejos para dormir',
+                    title,
                     style: GoogleFonts.poppins(
-                      fontSize: 18,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 5),
-                  Text(
-                    '¿Problemas para dormir? echa un vistazo',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: Colors.white70,
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFF134E5E),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
-                      minimumSize: const Size(0, 35),
-                    ),
-                    child: Text(
-                      'Conoce más',
-                      style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold),
-                    ),
-                  ),
                 ],
               ),
+              const SizedBox(height: 10),
+              Text(
+                countdown,
+                style: GoogleFonts.poppins(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              Text(
+                message,
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: Colors.white70,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // --- DIALOGO DE DETALLE DE SUEÑO ---
+  void _showSleepDetailDialog() {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.4),
+      builder: (BuildContext context) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          child: Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-            // SECCIÓN 2: INDICADOR DE CALIDAD DE SUEÑO (FLEX 1)
-            Expanded(
-              flex: 1,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+            backgroundColor: Colors.white,
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              width: MediaQuery.of(context).size.width * 0.85,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // BARRA DE GRADIENTE
-                  Container(
-                    width: 12,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.white24),
-                      gradient: const LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        stops: [0.0, 0.75, 1.0], // El azul domina hasta el 65% antes de volverse naranja
-                        colors: [
-                          Color(0xFF283593), // Azul Índigo (Más tranquilo y profundo)
-                          Color(0xFFFFB74D), // Naranja suave (Pastel)
-                          Color.fromARGB(255, 215, 89, 89), // Rojo suave (Pastel)
-                        ],
-                      ),
+                  Text(
+                    'Análisis de Sueño',
+                    style: GoogleFonts.poppins(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF134E5E),
                     ),
                   ),
-                  // FLECHA INDICADORA
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.start, // Apunta arriba (Azul)
-                    children: const [
-                       SizedBox(height: 10), // Ajuste para alinear con la zona azul
-                       Icon(Icons.arrow_left, color: Colors.white, size: 24),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Resumen de tu última noche',
+                    style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 20),
+                  // Gráfico circular simulado o estadísticas
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildSleepStatItem('Profundo', '1h 45m', Colors.indigo),
+                      _buildSleepStatItem('Ligero', '4h 30m', Colors.blue),
+                      _buildSleepStatItem('REM', '1h 15m', Colors.lightBlueAccent),
                     ],
                   ),
+                  const SizedBox(height: 20),
+                  const Divider(),
+                  _buildSleepTimeRow(Icons.bedtime, 'Hora de dormir', '23:15'),
+                  _buildSleepTimeRow(Icons.wb_sunny, 'Hora de despertar', '06:45'),
+                  const SizedBox(height: 20),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(
+                      'Cerrar',
+                      style: GoogleFonts.poppins(color: Colors.grey),
+                    ),
+                  )
                 ],
               ),
             ),
-          ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSleepStatItem(String label, String value, Color color) {
+    return Column(
+      children: [
+        Container(
+          height: 12,
+          width: 12,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
         ),
+        const SizedBox(height: 5),
+        Text(
+          value,
+          style: GoogleFonts.poppins(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF134E5E),
+          ),
+        ),
+        Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontSize: 12,
+            color: Colors.grey[600],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSleepTimeRow(IconData icon, String label, String time) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, color: const Color(0xFF134E5E), size: 20),
+          const SizedBox(width: 15),
+          Expanded(
+            child: Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: Colors.grey[700],
+              ),
+            ),
+          ),
+          Text(
+            time,
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF134E5E),
+            ),
+          ),
+        ],
       ),
     );
   }
