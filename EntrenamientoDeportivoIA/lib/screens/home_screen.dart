@@ -1398,6 +1398,22 @@ class _HomeScreenState extends State<HomeScreen> {
                 Navigator.pop(context);
               },
             ),
+            
+            ListTile(
+              leading: const Icon(Icons.group, color: Color(0xFF134E5E)),
+              title: Text(
+                'Entrenadores',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF134E5E),
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+
             ListTile(
               leading: const Icon(Icons.settings, color: Color(0xFF134E5E)),
               title: Text(
