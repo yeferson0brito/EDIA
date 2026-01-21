@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'dart:io';
 import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui'; // Para ImageFilter (Blur)
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 import 'package:pedometer/pedometer.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:confetti/confetti.dart';
@@ -26,6 +31,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<String> _titles = ['NEMA', 'PROGRESO', 'HISTORIAL', 'HIDRATACIÓN'];
 
+  final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
+
   // Variables para el podómetro
   late Stream<StepCount> _stepCountStream;
   int _steps = 0;
@@ -45,6 +52,12 @@ class _HomeScreenState extends State<HomeScreen> {
   double? _userHeight; // en cm
   double? _userWeight; // en kg
 
+  // Variables de Sueño (Configurables)
+  TimeOfDay _bedTime = const TimeOfDay(hour: 23, minute: 0);
+  TimeOfDay _wakeTime = const TimeOfDay(hour: 7, minute: 0);
+  bool _bedTimeNotification = false;
+  bool _wakeUpAlarm = false;
+
   // Timer para actualizar la tarjeta de sueño en tiempo real
   Timer? _timer;
   DateTime _currentTime = DateTime.now();
@@ -56,6 +69,8 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadUserData();
     _loadUserPhysicalData();
     _loadHydrationData();
+    _loadSleepPreferences(); // Cargar preferencias de sueño
+    _initNotifications();
     _initPedometer();
     _startClock();
     _pageController = PageController();
@@ -77,6 +92,130 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     });
+  }
+
+  // --- NOTIFICACIONES Y ALARMAS ---
+  Future<void> _initNotifications() async {
+    tz.initializeTimeZones();
+    // NOTA: Para producción, usa el paquete 'flutter_timezone' para obtener la ubicación real.
+    // Aquí establecemos una por defecto para evitar errores.
+    try {
+      tz.setLocalLocation(tz.getLocation('America/Mexico_City'));
+    } catch (e) {
+      print("Error configurando zona horaria: $e");
+    }
+
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    
+    const DarwinInitializationSettings initializationSettingsDarwin =
+        DarwinInitializationSettings();
+
+    const InitializationSettings initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsDarwin,
+    );
+
+    await _notificationsPlugin.initialize(initializationSettings);
+
+    // FIX: Solicitar permiso de notificaciones explícitamente (Obligatorio para Android 13+)
+    if (Platform.isAndroid) {
+      await Permission.notification.request();
+    }
+  }
+
+  Future<void> _scheduleSleepNotifications() async {
+    // Cancelar notificaciones previas para evitar duplicados
+    await _notificationsPlugin.cancel(100); // ID 100: Dormir
+    await _notificationsPlugin.cancel(101); // ID 101: Despertar
+
+    if (_bedTimeNotification) {
+      await _scheduleDailyNotification(
+        id: 100,
+        title: "Hora de dormir",
+        body: "Es momento de descansar para recuperar energías.",
+        time: _bedTime,
+      );
+    }
+
+    if (_wakeUpAlarm) {
+      await _scheduleDailyNotification(
+        id: 101,
+        title: "¡Buenos días!",
+        body: "Hora de levantarse y comenzar el día.",
+        time: _wakeTime,
+        soundName: 'alarm_sound', // Nombre del archivo en res/raw sin extensión
+      );
+    }
+  }
+
+  Future<void> _scheduleDailyNotification({
+    required int id,
+    required String title,
+    required String body,
+    required TimeOfDay time,
+    String? soundName,
+  }) async {
+    final now = DateTime.now();
+    var scheduledDate = DateTime(now.year, now.month, now.day, time.hour, time.minute);
+
+    if (scheduledDate.isBefore(now)) {
+      scheduledDate = scheduledDate.add(const Duration(days: 1));
+    }
+
+    AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      soundName != null ? 'alarm_channel_v2' : 'sleep_channel_v2', // FIX: Cambiar ID para resetear configuración antigua
+      soundName != null ? 'Alarma Despertador' : 'Recordatorio de Sueño',
+      channelDescription: soundName != null ? 'Canal para alarma con sonido' : 'Canal silencioso',
+      importance: Importance.max,
+      priority: Priority.high,
+      playSound: true,
+      sound: soundName != null ? RawResourceAndroidNotificationSound(soundName) : null,
+      audioAttributesUsage: soundName != null ? AudioAttributesUsage.alarm : AudioAttributesUsage.notification,
+    );
+
+    try {
+      await _notificationsPlugin.zonedSchedule(
+        id, title, body,
+        tz.TZDateTime.from(scheduledDate, tz.local),
+        NotificationDetails(android: androidDetails),
+        androidAllowWhileIdle: true,
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+        matchDateTimeComponents: DateTimeComponents.time,
+      );
+    } on PlatformException catch (e) {
+      if (e.code == 'exact_alarms_not_permitted') {
+        print("Error: Permiso de alarmas exactas no concedido. No se pudo programar la notificación.");
+      }
+    }
+  }
+
+  // --- CARGA Y GUARDADO DE PREFERENCIAS DE SUEÑO ---
+  Future<void> _loadSleepPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _bedTime = TimeOfDay(
+        hour: prefs.getInt('bedTimeHour') ?? 23,
+        minute: prefs.getInt('bedTimeMinute') ?? 0,
+      );
+      _wakeTime = TimeOfDay(
+        hour: prefs.getInt('wakeTimeHour') ?? 7,
+        minute: prefs.getInt('wakeTimeMinute') ?? 0,
+      );
+      _bedTimeNotification = prefs.getBool('bedTimeNotification') ?? false;
+      _wakeUpAlarm = prefs.getBool('wakeUpAlarm') ?? false;
+    });
+  }
+
+  Future<void> _saveSleepPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('bedTimeHour', _bedTime.hour);
+    await prefs.setInt('bedTimeMinute', _bedTime.minute);
+    await prefs.setInt('wakeTimeHour', _wakeTime.hour);
+    await prefs.setInt('wakeTimeMinute', _wakeTime.minute);
+    await prefs.setBool('bedTimeNotification', _bedTimeNotification);
+    await prefs.setBool('wakeUpAlarm', _wakeUpAlarm);
+    await _scheduleSleepNotifications(); // Programar al guardar
   }
 
   Future<void> _initPedometer() async {
@@ -1010,43 +1149,61 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildSleepCard() {
     DateTime now = _currentTime;
     
-    // Definir horario de sueño (1:00 AM - 7:00 AM)
-    DateTime todaySleep = DateTime(now.year, now.month, now.day, 1, 0); 
-    DateTime todayWake = DateTime(now.year, now.month, now.day, 7, 0);
+    // Convertir TimeOfDay a double para facilitar comparaciones
+    double currentDouble = now.hour + now.minute / 60.0;
+    double bedDouble = _bedTime.hour + _bedTime.minute / 60.0;
+    double wakeDouble = _wakeTime.hour + _wakeTime.minute / 60.0;
+
+    bool isSleeping = false;
+    
+    // Lógica para determinar si es hora de dormir
+    if (bedDouble < wakeDouble) {
+      // Caso normal: duerme y despierta el mismo día (ej: siesta 13:00 a 15:00) o madrugada (01:00 a 07:00)
+      if (currentDouble >= bedDouble && currentDouble < wakeDouble) {
+        isSleeping = true;
+      }
+    } else {
+      // Caso cruce de medianoche: duerme 23:00, despierta 07:00
+      if (currentDouble >= bedDouble || currentDouble < wakeDouble) {
+        isSleeping = true;
+      }
+    }
     
     String message = "";
     String title = "";
     Duration remaining;
     String bgImage = "";
     
-    // Lógica de estados
-    if (now.isAfter(todaySleep) && now.isBefore(todayWake)) {
-      // CASO 5: En horario de sueño (01:00 - 07:00)
-      message = "¡Ey!, Deberias estar durmiendo, todo bien?";
-      title = "Tiempo hasta tu hora de levantarse";
-      remaining = todayWake.difference(now);
+    if (isSleeping) {
+      // Estamos en horario de sueño
+      message = "¡Ey!, Deberías estar durmiendo, ¿todo bien?";
+      title = "Tiempo hasta despertar";
+      
+      // Calcular próxima hora de despertar
+      DateTime wakeDate = DateTime(now.year, now.month, now.day, _wakeTime.hour, _wakeTime.minute);
+      if (now.isAfter(wakeDate)) {
+        wakeDate = wakeDate.add(const Duration(days: 1));
+      }
+      remaining = wakeDate.difference(now);
+      
     } else {
-      // Horario despierto
-      title = "Tiempo hasta tu hora de dormir";
+      // Estamos despiertos
+      title = "Tiempo hasta dormir";
       
       // Calcular próxima hora de dormir
-      DateTime nextSleep = (now.isBefore(todaySleep)) 
-          ? todaySleep // Si es 00:30, la hora es hoy a la 1:00
-          : todaySleep.add(const Duration(days: 1)); // Si es 08:00, es mañana a la 1:00
-          
-      remaining = nextSleep.difference(now);
+      DateTime bedDate = DateTime(now.year, now.month, now.day, _bedTime.hour, _bedTime.minute);
+      if (now.isAfter(bedDate)) {
+        bedDate = bedDate.add(const Duration(days: 1));
+      }
+      remaining = bedDate.difference(now);
       
       if (remaining.inHours < 1) {
-        // CASO 4: Menos de 1 hora
         message = "Hora de ir a la cama";
       } else if (remaining.inHours < 4) {
-        // CASO 3: Menos de 4 horas
         message = "Se aproxima la hora del sueño, ¿nos preparamos?";
-      } else if (now.hour >= 7 && now.hour < 12) {
-        // CASO 1: Mañana (07:00 - 12:00)
-        message = "Buenos dias!";
+      } else if (now.hour >= 6 && now.hour < 12) {
+        message = "¡Buenos días!";
       } else {
-        // CASO 2: Tarde (12:00 - 21:00 aprox)
         message = "¡Hey!, Se nos va el día.";
       }
     }
@@ -1144,117 +1301,178 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (BuildContext context) {
         return BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-          child: Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            backgroundColor: Colors.white,
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              width: MediaQuery.of(context).size.width * 0.85,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Análisis de Sueño',
-                    style: GoogleFonts.poppins(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF134E5E),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Resumen de tu última noche',
-                    style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 20),
-                  // Gráfico circular simulado o estadísticas
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          child: StatefulBuilder(
+            builder: (context, setStateDialog) {
+              return Dialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                backgroundColor: Colors.white,
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  width: MediaQuery.of(context).size.width * 0.85,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      _buildSleepStatItem('Profundo', '1h 45m', Colors.indigo),
-                      _buildSleepStatItem('Ligero', '4h 30m', Colors.blue),
-                      _buildSleepStatItem('REM', '1h 15m', Colors.lightBlueAccent),
+                      Text(
+                        'Configuración de Sueño',
+                        style: GoogleFonts.poppins(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF134E5E),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Personaliza tus horarios y alertas',
+                        style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 20),
+                      
+                      // ALERTAS (Switches)
+                      SwitchListTile(
+                        title: Text("Recordatorio de dormir", style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF134E5E))),
+                        subtitle: Text("Notificación push", style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey)),
+                        value: _bedTimeNotification,
+                        activeColor: const Color(0xFF134E5E),
+                        onChanged: (val) async {
+                          if (val && Platform.isAndroid) {
+                            if (await Permission.scheduleExactAlarm.isDenied) {
+                              await Permission.scheduleExactAlarm.request();
+                            }
+                            // FIX: Asegurar permiso de notificación al activar
+                            if (await Permission.notification.isDenied) {
+                              await Permission.notification.request();
+                            }
+                          }
+                          setStateDialog(() => _bedTimeNotification = val);
+                          _saveSleepPreferences();
+                          setState(() {}); // Actualizar pantalla principal
+                        },
+                      ),
+                      SwitchListTile(
+                        title: Text("Alarma despertador", style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF134E5E))),
+                        subtitle: Text("Sonido para despertar", style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey)),
+                        value: _wakeUpAlarm,
+                        activeColor: const Color(0xFF134E5E),
+                        onChanged: (val) async {
+                          if (val && Platform.isAndroid) {
+                            if (await Permission.scheduleExactAlarm.isDenied) {
+                              await Permission.scheduleExactAlarm.request();
+                            }
+                            // FIX: Asegurar permiso de notificación al activar
+                            if (await Permission.notification.isDenied) {
+                              await Permission.notification.request();
+                            }
+                          }
+                          setStateDialog(() => _wakeUpAlarm = val);
+                          _saveSleepPreferences();
+                          setState(() {});
+                        },
+                      ),
+
+                      const SizedBox(height: 20),
+                      const Divider(),
+                      
+                      // BOTONES DE HORA
+                      _buildSleepTimeButton(
+                        icon: Icons.bedtime, 
+                        label: 'Hora de dormir', 
+                        time: _bedTime,
+                        onTap: () async {
+                          final TimeOfDay? picked = await showTimePicker(
+                            context: context,
+                            initialTime: _bedTime,
+                          );
+                          if (picked != null && picked != _bedTime) {
+                            setStateDialog(() => _bedTime = picked);
+                            _saveSleepPreferences();
+                            setState(() {});
+                          }
+                        }
+                      ),
+                      _buildSleepTimeButton(
+                        icon: Icons.wb_sunny, 
+                        label: 'Hora de despertar', 
+                        time: _wakeTime,
+                        onTap: () async {
+                          final TimeOfDay? picked = await showTimePicker(
+                            context: context,
+                            initialTime: _wakeTime,
+                          );
+                          if (picked != null && picked != _wakeTime) {
+                            setStateDialog(() => _wakeTime = picked);
+                            _saveSleepPreferences();
+                            setState(() {});
+                          }
+                        }
+                      ),
+                      
+                      const SizedBox(height: 20),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(
+                          'Cerrar',
+                          style: GoogleFonts.poppins(color: Colors.grey),
+                        ),
+                      )
                     ],
                   ),
-                  const SizedBox(height: 20),
-                  const Divider(),
-                  _buildSleepTimeRow(Icons.bedtime, 'Hora de dormir', '23:15'),
-                  _buildSleepTimeRow(Icons.wb_sunny, 'Hora de despertar', '06:45'),
-                  const SizedBox(height: 20),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text(
-                      'Cerrar',
-                      style: GoogleFonts.poppins(color: Colors.grey),
-                    ),
-                  )
-                ],
-              ),
-            ),
+                ),
+              );
+            }
           ),
         );
       },
     );
   }
 
-  Widget _buildSleepStatItem(String label, String value, Color color) {
-    return Column(
-      children: [
-        Container(
-          height: 12,
-          width: 12,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
-        ),
-        const SizedBox(height: 5),
-        Text(
-          value,
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF134E5E),
-          ),
-        ),
-        Text(
-          label,
-          style: GoogleFonts.poppins(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
-        ),
-      ],
-    );
-  }
+  Widget _buildSleepTimeButton({
+    required IconData icon, 
+    required String label, 
+    required TimeOfDay time, 
+    required VoidCallback onTap
+  }) {
+    final hour = time.hour.toString().padLeft(2, '0');
+    final minute = time.minute.toString().padLeft(2, '0');
+    final timeString = '$hour:$minute';
 
-  Widget _buildSleepTimeRow(IconData icon, String label, String time) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        children: [
-          Icon(icon, color: const Color(0xFF134E5E), size: 20),
-          const SizedBox(width: 15),
-          Expanded(
-            child: Text(
-              label,
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: Colors.grey[700],
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
+        child: Row(
+          children: [
+            Icon(icon, color: const Color(0xFF134E5E), size: 24),
+            const SizedBox(width: 15),
+            Expanded(
+              child: Text(
+                label,
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: Colors.grey[700],
+                ),
               ),
             ),
-          ),
-          Text(
-            time,
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF134E5E),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[300]!)
+              ),
+              child: Text(
+                timeString,
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF134E5E),
+                ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
