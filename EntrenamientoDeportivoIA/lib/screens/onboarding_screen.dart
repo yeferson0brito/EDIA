@@ -31,7 +31,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
 
   // --- VARIABLES PARA EL FORMULARIO WIZARD ---
   int _currentStep = 0;
-  final int _totalSteps = 3;
+  final int _totalSteps = 4;
   late PageController _formPageController;
   
   // Controladores para los datos médicos
@@ -40,6 +40,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
   final TextEditingController _dobController = TextEditingController();
   String? _selectedGender;
   String _selectedActivityLevel = "Sedentario"; // Valor por defecto
+
+  // Variables para Hábitos de Sueño
+  double _sleepHours = 7.0;
+  TimeOfDay _bedTime = const TimeOfDay(hour: 23, minute: 0);
+  TimeOfDay _wakeTime = const TimeOfDay(hour: 7, minute: 0);
+  bool _wakesUpAtNight = false;
 
   // URL corregida para el endpoint de onboarding
   final String _apiUrl = DireccionBaseURL.onboardingUrl;
@@ -110,6 +116,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
       // Guardar datos físicos en SharedPreferences para uso local en la app
       if (height != null) await prefs.setDouble('userHeight', height);
       if (weight != null) await prefs.setDouble('userWeight', weight);
+
+      // Guardar preferencias de sueño para que la Tarjeta del Home las use inmediatamente
+      await prefs.setInt('bedTimeHour', _bedTime.hour);
+      await prefs.setInt('bedTimeMinute', _bedTime.minute);
+      await prefs.setInt('wakeTimeHour', _wakeTime.hour);
+      await prefs.setInt('wakeTimeMinute', _wakeTime.minute);
       
       print("Enviando datos a $_apiUrl");
 
@@ -125,6 +137,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
           'weight_kg': weight, // Enviamos número
           'gender': _selectedGender,
           'activity_level': _selectedActivityLevel, // Nuevo campo
+          'sleep_hours': _sleepHours,
+          'bed_time': '${_bedTime.hour.toString().padLeft(2, '0')}:${_bedTime.minute.toString().padLeft(2, '0')}',
+          'wake_time': '${_wakeTime.hour.toString().padLeft(2, '0')}:${_wakeTime.minute.toString().padLeft(2, '0')}',
+          'wakes_up_at_night': _wakesUpAtNight,
           'onboarded': true, // Marcamos como completado
         }),
       );
@@ -319,6 +335,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
         _showMessage("Por favor completa tus medidas", Colors.orange);
         return;
       }
+      // Validaciones de límites (Máximo 300)
+      final double? h = double.tryParse(_heightController.text);
+      final double? w = double.tryParse(_weightController.text);
+      
+      if (h != null && h > 300) {
+        _showMessage("La estatura no puede exceder 300 cm", Colors.orange);
+        return;
+      }
+      if (w != null && w > 300) {
+        _showMessage("El peso no puede exceder 300 kg", Colors.orange);
+        return;
+      }
     }
 
     if (_currentStep < _totalSteps - 1) {
@@ -366,6 +394,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                   _buildStep1BasicInfo(),
                   _buildStep2PhysicalMeasures(),
                   _buildStep3ActivityLevel(),
+                  _buildStep4SleepHabits(),
                 ],
               ),
             ),
@@ -585,6 +614,127 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                 border: Border.all(color: isSelected ? const Color(0xFF3B82F6) : Colors.grey),
               ),
               child: isSelected ? const Icon(Icons.check, size: 16, color: Colors.white) : null,
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  // --- PASO 4: HÁBITOS DE SUEÑO ---
+  Widget _buildStep4SleepHabits() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Hábitos de Sueño", style: GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.bold, color: const Color(0xFF134E5E))),
+          const SizedBox(height: 10),
+          Text("Para optimizar tu recuperación y energía", style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey[600])),
+          const SizedBox(height: 30),
+
+          // Horas de sueño
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(child: Text("¿Cuántas horas en promedio acostumbras dormir?", style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600))),
+              Text("${_sleepHours.toStringAsFixed(1)} h", style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF3B82F6))),
+            ],
+          ),
+          Slider(
+            value: _sleepHours,
+            min: 3,
+            max: 12,
+            divisions: 18, // Pasos de 0.5 horas
+            activeColor: const Color(0xFF3B82F6),
+            onChanged: (val) {
+              setState(() {
+                _sleepHours = val;
+                // Recalcular hora de levantarse manteniendo fija la hora de acostarse
+                final now = DateTime.now();
+                final dtBed = DateTime(now.year, now.month, now.day, _bedTime.hour, _bedTime.minute);
+                final dtWake = dtBed.add(Duration(minutes: (val * 60).round()));
+                _wakeTime = TimeOfDay(hour: dtWake.hour, minute: dtWake.minute);
+              });
+            },
+          ),
+
+          const SizedBox(height: 20),
+
+          // Selectores de Hora
+          _buildTimePickerTile("Hora de acostarse", _bedTime, (newTime) {
+            setState(() => _bedTime = newTime);
+          }),
+          const SizedBox(height: 15),
+          _buildTimePickerTile("Hora de levantarse", _wakeTime, (newTime) {
+            setState(() => _wakeTime = newTime);
+          }),
+
+          const SizedBox(height: 30),
+
+          // Pregunta Despertar nocturno (Sí/No)
+          Text("¿Sueles despertarte por la noche?", style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 15),
+          Row(
+            children: [
+              Expanded(child: _buildYesNoCard("Sí", true)),
+              const SizedBox(width: 15),
+              Expanded(child: _buildYesNoCard("No", false)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimePickerTile(String label, TimeOfDay time, Function(TimeOfDay) onChanged) {
+    return InkWell(
+      onTap: () async {
+        final TimeOfDay? picked = await showTimePicker(context: context, initialTime: time);
+        if (picked != null) onChanged(picked);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label, style: GoogleFonts.poppins(fontSize: 16, color: Colors.black87)),
+            Text(time.format(context), style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF3B82F6))),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildYesNoCard(String label, bool value) {
+    bool isSelected = _wakesUpAtNight == value;
+    return GestureDetector(
+      onTap: () => setState(() => _wakesUpAtNight = value),
+      child: Container(
+        height: 60,
+        padding: const EdgeInsets.symmetric(horizontal: 15),
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(15),
+          border: isSelected ? Border.all(color: const Color(0xFF3B82F6), width: 2) : null,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label, style: GoogleFonts.poppins(color: Colors.black87, fontWeight: FontWeight.w500)),
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: isSelected ? const Color(0xFF3B82F6) : Colors.grey),
+                color: isSelected ? const Color(0xFF3B82F6) : null,
+              ),
+              child: isSelected ? const Icon(Icons.check, size: 12, color: Colors.white) : null,
             )
           ],
         ),

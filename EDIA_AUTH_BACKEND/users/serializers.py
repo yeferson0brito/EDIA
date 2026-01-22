@@ -9,13 +9,13 @@ from django.core.exceptions import ObjectDoesNotExist
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ('date_of_birth', 'height_cm', 'weight_kg', 'gender', 'activity_level', 'onboarded', 'role')
+        fields = ('date_of_birth', 'height_cm', 'weight_kg', 'gender', 'activity_level', 'sleep_hours', 'bed_time', 'wake_time', 'wakes_up_at_night', 'onboarded', 'role')
         read_only_fields = ('onboarded', 'role')
 
 class OnboardingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ('date_of_birth', 'height_cm', 'weight_kg', 'gender', 'activity_level')
+        fields = ('date_of_birth', 'height_cm', 'weight_kg', 'gender', 'activity_level', 'sleep_hours', 'bed_time', 'wake_time', 'wakes_up_at_night')
 
 class DailyRecordSerializer(serializers.ModelSerializer):
     class Meta:

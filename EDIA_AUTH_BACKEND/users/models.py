@@ -20,6 +20,10 @@ class Profile(models.Model):
     weight_kg = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, null=True, blank=True)
     activity_level = models.CharField(max_length=50, blank=True, null=True)
+    sleep_hours = models.FloatField(null=True, blank=True)
+    bed_time = models.TimeField(null=True, blank=True)
+    wake_time = models.TimeField(null=True, blank=True)
+    wakes_up_at_night = models.BooleanField(default=False)
     onboarded = models.BooleanField(default=False)
     role = models.ForeignKey(Group, null=True, blank=True, on_delete=models.SET_NULL) 
 
