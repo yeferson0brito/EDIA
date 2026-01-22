@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../config.dart';
 
 // Importaciones para el Carrusel
 import '../models/onboarding_item.dart';
@@ -41,7 +42,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
   String _selectedActivityLevel = "Sedentario"; // Valor por defecto
 
   // URL corregida para el endpoint de onboarding
-  final String _apiUrl = "http://10.0.2.2:8000/api/onboarding/"; 
+  final String _apiUrl = DireccionBaseURL.onboardingUrl;
 
   @override
   void initState() {
