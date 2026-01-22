@@ -62,6 +62,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Timer? _timer;
   DateTime _currentTime = DateTime.now();
 
+  // Variables para el registro diario (Racha y Check-in)
+  List<String> _checkInDates = [];
+  int _currentStreak = 0;
+
   @override
   void initState() {
     super.initState();
@@ -78,6 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
     await _loadUserPhysicalData();
     await _loadHydrationData();
     await _loadSleepPreferences();
+    await _loadCheckInData(); // Cargar historial de registros
 
     // 2. Inicializar notificaciones (Puede abrir diálogo de permiso)
     await _initNotifications();
@@ -335,6 +340,63 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _onStepCountError(error) {
     print('Error en podómetro: $error');
+  }
+
+  // --- LÓGICA DE REGISTRO DIARIO (RACHA) ---
+  Future<void> _loadCheckInData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _checkInDates = prefs.getStringList('checkInDates') ?? [];
+      _calculateStreak();
+    });
+  }
+
+  void _calculateStreak() {
+    if (_checkInDates.isEmpty) {
+      _currentStreak = 0;
+      return;
+    }
+
+    // Ordenar fechas
+    List<String> sortedDates = _checkInDates.toSet().toList()..sort();
+    
+    int streak = 0;
+    DateTime checkDate = DateTime.now();
+    String dateStr = checkDate.toString().substring(0, 10);
+
+    // Si hoy no está registrado, verificamos si la racha viene desde ayer
+    if (!sortedDates.contains(dateStr)) {
+       checkDate = checkDate.subtract(const Duration(days: 1));
+       dateStr = checkDate.toString().substring(0, 10);
+       if (!sortedDates.contains(dateStr)) {
+         _currentStreak = 0;
+         return;
+       }
+    }
+
+    // Contar días consecutivos hacia atrás
+    while (true) {
+      String d = checkDate.toString().substring(0, 10);
+      if (sortedDates.contains(d)) {
+        streak++;
+        checkDate = checkDate.subtract(const Duration(days: 1));
+      } else {
+        break;
+      }
+    }
+    _currentStreak = streak;
+  }
+
+  Future<void> _saveCheckIn() async {
+    final prefs = await SharedPreferences.getInstance();
+    String today = DateTime.now().toString().substring(0, 10);
+    if (!_checkInDates.contains(today)) {
+      _checkInDates.add(today);
+      await prefs.setStringList('checkInDates', _checkInDates);
+      setState(() {
+        _calculateStreak();
+      });
+    }
   }
 
   // --- LÓGICA DE HIDRATACIÓN ---
@@ -903,9 +965,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // TARJETA DE REGISTRO DIARIO (Reemplaza Intensidad)
   Widget _buildDailyCheckInCard() {
-    // Mock data: 1 = reportado, 0 = no reportado (Últimos 7 días)
-    final List<int> weekStatus = [1, 1, 0, 1, 1, 0, 0];
-    final List<String> days = ["L", "M", "M", "J", "V", "S", "D"];
+    // Generar los últimos 7 días dinámicamente
+    final List<DateTime> last7Days = List.generate(7, (index) {
+      return DateTime.now().subtract(Duration(days: 6 - index));
+    });
+    final List<String> dayLetters = ["", "L", "M", "M", "J", "V", "S", "D"];
 
     return GestureDetector(
       onTap: _showDailyCheckInDialog,
@@ -953,7 +1017,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         Text(
-                          'Racha actual: 2 días',
+                          'Racha actual: $_currentStreak días',
                           style: GoogleFonts.poppins(
                             fontSize: 12,
                             color: Colors.grey[600],
@@ -970,8 +1034,11 @@ class _HomeScreenState extends State<HomeScreen> {
             // Visualización de la semana
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: List.generate(7, (index) {
-                bool isDone = weekStatus[index] == 1;
+              children: last7Days.map((date) {
+                String dateStr = date.toString().substring(0, 10);
+                bool isDone = _checkInDates.contains(dateStr);
+                String dayLetter = dayLetters[date.weekday];
+                
                 return Column(
                   children: [
                     Container(
@@ -992,7 +1059,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      days[index],
+                      dayLetter,
                       style: GoogleFonts.poppins(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -1001,7 +1068,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
                 );
-              }),
+              }).toList(),
             ),
           ],
         ),
@@ -1147,8 +1214,7 @@ class _HomeScreenState extends State<HomeScreen> {
         String sleepQuality = "Buena";
         int selectedMoodIndex = -1;
         bool didExercise = false;
-        String selectedActivity = "Caminata";
-        double exerciseDuration = 30;
+        Map<String, double> selectedActivities = {}; // Mapa para actividad y duración
 
         final List<String> activities = [
           "Caminata",
@@ -1160,10 +1226,11 @@ class _HomeScreenState extends State<HomeScreen> {
           "Otro"
         ];
         final List<Map<String, dynamic>> moods = [
-          {"emoji": "😫", "label": "Mal"},
+          {"emoji": "😫", "label": "Muy mal"},
+          {"emoji": "😕", "label": "Mal"},
           {"emoji": "😐", "label": "Normal"},
           {"emoji": "🙂", "label": "Bien"},
-          {"emoji": "🤩", "label": "Excelente"},
+          {"emoji": "🤩", "label": "Excelente"}, // Agregado el 5to
         ];
 
         return BackdropFilter(
@@ -1269,31 +1336,44 @@ class _HomeScreenState extends State<HomeScreen> {
                                 color: const Color(0xFF134E5E))),
                         const SizedBox(height: 15),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: List.generate(moods.length, (index) {
                             bool isSelected = selectedMoodIndex == index;
                             return GestureDetector(
                               onTap: () =>
                                   setState(() => selectedMoodIndex = index),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? const Color(0xFF134E5E).withOpacity(0.1)
-                                      : Colors.transparent,
-                                  shape: BoxShape.circle,
-                                  border: isSelected
-                                      ? Border.all(
-                                          color: const Color(0xFF134E5E),
-                                          width: 2)
-                                      : Border.all(
-                                          color: Colors.transparent, width: 2),
-                                ),
-                                child: Text(
-                                  moods[index]["emoji"],
-                                  style: const TextStyle(fontSize: 32),
-                                ),
+                              child: Column(
+                                children: [
+                                  AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? const Color(0xFF134E5E).withOpacity(0.1)
+                                          : Colors.transparent,
+                                      shape: BoxShape.circle,
+                                      border: isSelected
+                                          ? Border.all(
+                                              color: const Color(0xFF134E5E),
+                                              width: 2)
+                                          : Border.all(
+                                              color: Colors.transparent, width: 2),
+                                    ),
+                                    child: Text(
+                                      moods[index]["emoji"],
+                                      style: const TextStyle(fontSize: 28),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "${index + 1}", // Número 1-5
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 12, 
+                                      fontWeight: FontWeight.bold,
+                                      color: isSelected ? const Color(0xFF134E5E) : Colors.grey
+                                    ),
+                                  ),
+                                ],
                               ),
                             );
                           }),
@@ -1329,43 +1409,56 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                DropdownButtonFormField<String>(
-                                  value: selectedActivity,
-                                  decoration: InputDecoration(
-                                    labelText: "Tipo de actividad",
-                                    labelStyle:
-                                        GoogleFonts.poppins(fontSize: 14),
-                                    border: OutlineInputBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(10)),
-                                    contentPadding: const EdgeInsets.symmetric(
-                                        horizontal: 15, vertical: 10),
-                                  ),
-                                  items: activities.map((String value) {
-                                    return DropdownMenuItem<String>(
-                                      value: value,
-                                      child: Text(value,
-                                          style: GoogleFonts.poppins(
-                                              fontSize: 14)),
+                                Text("Selecciona las actividades:", style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500)),
+                                const SizedBox(height: 10),
+                                Wrap(
+                                  spacing: 8.0,
+                                  runSpacing: 4.0,
+                                  children: activities.map((activity) {
+                                    final bool isSelected = selectedActivities.containsKey(activity);
+                                    return FilterChip(
+                                      label: Text(activity),
+                                      selected: isSelected,
+                                      onSelected: (bool selected) {
+                                        setState(() {
+                                          if (selected) {
+                                            selectedActivities[activity] = 30.0; // Tiempo base
+                                          } else {
+                                            selectedActivities.remove(activity);
+                                          }
+                                        });
+                                      },
+                                      selectedColor: const Color(0xFF134E5E).withOpacity(0.2),
+                                      checkmarkColor: const Color(0xFF134E5E),
+                                      labelStyle: GoogleFonts.poppins(
+                                        fontSize: 12,
+                                        color: isSelected ? const Color(0xFF134E5E) : Colors.black87,
+                                      ),
                                     );
                                   }).toList(),
-                                  onChanged: (val) =>
-                                      setState(() => selectedActivity = val!),
                                 ),
-                                const SizedBox(height: 15),
-                                Text(
-                                    "Duración: ${exerciseDuration.toInt()} min",
-                                    style: GoogleFonts.poppins(fontSize: 14)),
-                                Slider(
-                                  value: exerciseDuration,
-                                  min: 10,
-                                  max: 180,
-                                  divisions: 17,
-                                  label: "${exerciseDuration.toInt()} min",
-                                  activeColor: const Color(0xFF134E5E),
-                                  onChanged: (val) =>
-                                      setState(() => exerciseDuration = val),
-                                ),
+                                const SizedBox(height: 20),
+                                if (selectedActivities.isNotEmpty) ...[
+                                  const Divider(),
+                                  ...selectedActivities.entries.map((entry) {
+                                    return Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text("${entry.key}: ${entry.value.toInt()} min",
+                                            style: GoogleFonts.poppins(fontSize: 14)),
+                                        Slider(
+                                          value: entry.value,
+                                          min: 5,
+                                          max: 180,
+                                          divisions: 35,
+                                          label: "${entry.value.toInt()} min",
+                                          activeColor: const Color(0xFF134E5E),
+                                          onChanged: (val) => setState(() => selectedActivities[entry.key] = val),
+                                        ),
+                                      ],
+                                    );
+                                  }),
+                                ],
                               ],
                             ),
                           ),
@@ -1377,7 +1470,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: () {
+                            onPressed: () async {
+                              // Guardar localmente la fecha para la racha
+                              await _saveCheckIn();
+                              
+                              if (!context.mounted) return;
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
