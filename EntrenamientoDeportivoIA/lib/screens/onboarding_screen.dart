@@ -47,6 +47,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
   @override
   void initState() {
     super.initState();
+    print("OnboardingScreen: Inicializando..."); // DEBUG: Verificar si carga
     // Configuración de animaciones del carrusel (Entrada elástica)
     _animationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 800));
     _animation = CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack);
@@ -191,7 +192,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
             builder: (context, child) {
               return Transform.translate(
                 offset: Offset(0, -100 * (1 - _animation.value)),
-                child: Image.asset("assets/images/LogoNEMAsinTexto.png", height: 65, width:235, fit: BoxFit.contain),
+                child: Image.asset(
+                  "assets/images/LogoNEMAsinTexto.png", 
+                  height: 65, 
+                  width:235, 
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.error, color: Colors.red),
+                ),
               );
             },
           ),

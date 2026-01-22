@@ -143,12 +143,11 @@ class _LoginScreenState extends State<LoginScreen> {
         // REDIRECCIÓN INTELIGENTE
         // Si ya hizo onboarding -> Home. Si no -> OnboardingScreen
         final String nextRoute = isOnboarded ? '/home' : '/onboarding';
+        print("Navegando a ruta: $nextRoute"); // DEBUG: Verificar ruta
 
         Navigator.pushReplacementNamed(
           context,
           nextRoute,
-
-          ///home
         ); //Pasamos a HomeScreen
         //####################################################################################################################################
       } else if (response.statusCode == 401) {

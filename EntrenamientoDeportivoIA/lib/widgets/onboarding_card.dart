@@ -155,6 +155,10 @@ class OnboardingCard extends StatelessWidget {
           item.mainImage,
           height: size.height * .30, // Tamaño dinámico
           fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) {
+             print("ERROR CARGANDO IMAGEN: ${item.mainImage}");
+             return const Icon(Icons.broken_image, size: 100, color: Colors.red);
+          },
         ),
       ),
     );
