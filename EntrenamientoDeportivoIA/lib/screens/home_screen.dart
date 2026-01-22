@@ -467,6 +467,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear(); // Limpia todos los datos locales para evitar mezclar sesiones
+    
+    if (!mounted) return;
+
     // Navegar al login y eliminar rutas anteriores
     Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
@@ -475,19 +478,19 @@ class _HomeScreenState extends State<HomeScreen> {
   void _confirmLogout() {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text("Cerrar Sesión"),
           content: const Text("¿Estás seguro de que deseas salir?"),
           actions: [
             TextButton(
               child: const Text("Cancelar"),
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(dialogContext).pop(),
             ),
             TextButton(
               child: const Text("Salir"),
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(dialogContext).pop();
                 _logout(context);
               },
             ),

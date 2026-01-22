@@ -1,12 +1,12 @@
 @baseUrl = http://0.0.0.0:8000
-@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY5MTA3MDg1LCJpYXQiOjE3NjkxMDM0ODUsImp0aSI6IjI1Yzk4ODkxNGUxZjRjYWQ4NWZmMzIwM2MzZDRlM2M4IiwidXNlcl9pZCI6MjcsInVzZXJuYW1lIjoidXNlcm5hbWU4IiwiZW1haWwiOiJ1c2VybmFtZThAdXNlci5jb20iLCJncm91cCI6WyJVc3VhcmlvIEJhc2ljbyJdLCJyb2xlIjoiVXN1YXJpbyBCYXNpY28ifQ.jX0upqrRYRrF2iDlkh_baG1_RUPdFGL9H4b9MK_MpPk
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY5MTE0Mjg1LCJpYXQiOjE3NjkxMTA2ODUsImp0aSI6IjNjZWI3NmU4MzBhMTRjYWQ4NDM3NTE2YTRiZmIxNDE1IiwidXNlcl9pZCI6MjYsInVzZXJuYW1lIjoidXNlcm5hbWU3IiwiZW1haWwiOiJ1c2VybmFtZTdAdXNlci5jb20iLCJncm91cCI6WyJVc3VhcmlvIEJhc2ljbyJdLCJyb2xlIjoiVXN1YXJpbyBCYXNpY28ifQ.FRV2fMaiMWBTmHXOjv40BiKsCllB-1-rEEi__cLErJ8
 ### Login (obtén access token)
 POST {{baseUrl}}/api/login/
 Content-Type: application/json
 
 {
-  "username": "username8",
-  "password": "username8"
+  "username": "username7",
+  "password": "username7"
 }
 
 ### Obtener profile / estado onboarding (GET)
@@ -22,7 +22,14 @@ Authorization: Bearer {{accessToken}}
   "date_of_birth": "1990-01-01",
   "height_cm": 180,
   "weight_kg": 75.5,
-  "gender": "M"
+  "gender": "M",
+  "activity_level": "Sedentario",
+  "sleep_hours": 7,
+  "bed_time": "20:00",
+  "wake_time": "06:00",
+  "wakes_up_at_night": false,
+  "onboarded": true,
+  "role": 1
 }
 
 ### ------------------------------------------------------------------------
@@ -55,18 +62,112 @@ Authorization: Bearer {{accessToken}}
   ]
 }
 
+### ------------------------------------------------------------------------
+### SIMULACIÓN DE UNA SEMANA COMPLETA (Lunes a Domingo)
+### ------------------------------------------------------------------------
+
+### Lunes 19 - Inicio de semana activo
+POST {{baseUrl}}/api/history/
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "date": "2026-01-19",
+  "steps": 8500,
+  "distance_km": 6.5,
+  "calories_kcal": 420.0,
+  "sleep_hours": 7.0,
+  "sleep_quality": "Regular",
+  "mood": 3,
+  "hydration_ml": 2000,
+  "activities": [
+    {
+      "activity_type": "Caminata",
+      "duration_minutes": 40
+    }
+  ]
+}
+
+### Martes 20 - Entrenamiento intenso
+POST {{baseUrl}}/api/history/
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "date": "2026-01-20",
+  "steps": 11000,
+  "distance_km": 8.0,
+  "calories_kcal": 600.0,
+  "sleep_hours": 8.0,
+  "sleep_quality": "Buena",
+  "mood": 4,
+  "hydration_ml": 2800,
+  "activities": [
+    {
+      "activity_type": "Gimnasio",
+      "duration_minutes": 60
+    },
+    {
+      "activity_type": "Caminata",
+      "duration_minutes": 15
+    }
+  ]
+}
+
+### Miércoles 21 - Día de descanso / Mal sueño
+POST {{baseUrl}}/api/history/
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "date": "2026-01-21",
+  "steps": 4500,
+  "distance_km": 3.2,
+  "calories_kcal": 200.0,
+  "sleep_hours": 5.5,
+  "sleep_quality": "Mala",
+  "mood": 2,
+  "hydration_ml": 1500,
+  "activities": []
+}
+
+### Jueves 22 - Recuperación con Yoga
+POST {{baseUrl}}/api/history/
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "date": "2026-01-22",
+  "steps": 7000,
+  "distance_km": 5.0,
+  "calories_kcal": 350.0,
+  "sleep_hours": 7.5,
+  "sleep_quality": "Buena",
+  "mood": 4,
+  "hydration_ml": 2200,
+  "activities": [
+    {
+      "activity_type": "Yoga",
+      "duration_minutes": 50
+    }
+  ]
+}
+
+
+
+
 ### Obtener historial completo (GET)
 GET {{baseUrl}}/api/history/
 Authorization: Bearer {{accessToken}}
 
 ### Actualizar un registro existente (PUT) - Reemplaza actividades
 # NOTA: Reemplaza '1' con el ID real del registro que quieras editar
-PUT {{baseUrl}}/api/history/1/
+PUT {{baseUrl}}/api/history/9/
 Content-Type: application/json
 Authorization: Bearer {{accessToken}}
 
 {
-  "date": "2023-10-30",
+  "date": "2026-01-21",
   "steps": 12000,
   "distance_km": 9.5,
   "calories_kcal": 600.0,
