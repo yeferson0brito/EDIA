@@ -1,12 +1,12 @@
-@baseUrl = http://127.0.0.1:8000
-@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY4MzY1MDYyLCJpYXQiOjE3NjgzNjE0NjIsImp0aSI6ImJjYjU3ZDJkMDJmZTQ5YjU4MGIzZjljMjU1NTBlMzZkIiwidXNlcl9pZCI6MjQsInVzZXJuYW1lIjoidXNlcm5hbWU2IiwiZW1haWwiOiJ1c2VybmFtZTZAdXNlci5jb20iLCJncm91cCI6WyJVc3VhcmlvIEJhc2ljbyJdLCJyb2xlIjoiVXN1YXJpbyBCYXNpY28ifQ.F9UA2n_D0ZXcHg06LeLm-rDMA17eK7T9h1SYg4NTmdo
+@baseUrl = http://0.0.0.0:8000
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY5MTA3MDg1LCJpYXQiOjE3NjkxMDM0ODUsImp0aSI6IjI1Yzk4ODkxNGUxZjRjYWQ4NWZmMzIwM2MzZDRlM2M4IiwidXNlcl9pZCI6MjcsInVzZXJuYW1lIjoidXNlcm5hbWU4IiwiZW1haWwiOiJ1c2VybmFtZThAdXNlci5jb20iLCJncm91cCI6WyJVc3VhcmlvIEJhc2ljbyJdLCJyb2xlIjoiVXN1YXJpbyBCYXNpY28ifQ.jX0upqrRYRrF2iDlkh_baG1_RUPdFGL9H4b9MK_MpPk
 ### Login (obtén access token)
 POST {{baseUrl}}/api/login/
 Content-Type: application/json
 
 {
-  "username": "username6",
-  "password": "username6"
+  "username": "username8",
+  "password": "username8"
 }
 
 ### Obtener profile / estado onboarding (GET)
@@ -29,19 +29,60 @@ Authorization: Bearer {{accessToken}}
 ### HISTORIAL (DAILY RECORDS)
 ### ------------------------------------------------------------------------
 
-### Crear un registro diario (POST)
+### Crear un registro diario COMPLETO (POST)
 POST {{baseUrl}}/api/history/
 Content-Type: application/json
 Authorization: Bearer {{accessToken}}
 
 {
-  "date": "2023-10-28",
-  "steps": 8500,
-  "sleep_hours": 7.5,
-  "mood": 4,
-  "hydration_ml": 2000
+  "date": "2023-10-30",
+  "steps": 10500,
+  "distance_km": 8.2,
+  "calories_kcal": 550.0,
+  "sleep_hours": 7.0,
+  "sleep_quality": "Buena",
+  "mood": 5,
+  "hydration_ml": 2500,
+  "activities": [
+    {
+      "activity_type": "Correr",
+      "duration_minutes": 45
+    },
+    {
+      "activity_type": "Caminata",
+      "duration_minutes": 20
+    }
+  ]
 }
 
 ### Obtener historial completo (GET)
 GET {{baseUrl}}/api/history/
+Authorization: Bearer {{accessToken}}
+
+### Actualizar un registro existente (PUT) - Reemplaza actividades
+# NOTA: Reemplaza '1' con el ID real del registro que quieras editar
+PUT {{baseUrl}}/api/history/1/
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "date": "2023-10-30",
+  "steps": 12000,
+  "distance_km": 9.5,
+  "calories_kcal": 600.0,
+  "sleep_hours": 7.5,
+  "sleep_quality": "Excelente",
+  "mood": 5,
+  "hydration_ml": 3000,
+  "activities": [
+    {
+      "activity_type": "Gimnasio",
+      "duration_minutes": 60
+    }
+  ]
+}
+
+### Obtener detalle de un registro específico (GET)
+# NOTA: Reemplaza '1' con el ID real
+GET {{baseUrl}}/api/history/1/
 Authorization: Bearer {{accessToken}}

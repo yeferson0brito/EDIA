@@ -1,6 +1,6 @@
 # IMPORTS PARA SERIALIZERS**********************************************************************************
 from django.contrib.auth.models import User, Group
-from .models import Profile, DailyRecord
+from .models import Profile, DailyRecord, PhysicalActivity
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator  # Para validar campos únicos
 import re  # expresiones regulares
@@ -17,11 +17,41 @@ class OnboardingSerializer(serializers.ModelSerializer):
         model = Profile
         fields = ('date_of_birth', 'height_cm', 'weight_kg', 'gender', 'activity_level', 'sleep_hours', 'bed_time', 'wake_time', 'wakes_up_at_night')
 
+class PhysicalActivitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PhysicalActivity
+        fields = ('id', 'activity_type', 'duration_minutes')
+
 class DailyRecordSerializer(serializers.ModelSerializer):
+    activities = PhysicalActivitySerializer(many=True, required=False)
+
     class Meta:
         model = DailyRecord
-        fields = ('id', 'date', 'steps', 'sleep_hours', 'mood', 'hydration_ml')
+        fields = ('id', 'date', 'steps', 'distance_km', 'calories_kcal', 'sleep_hours', 'sleep_quality', 'mood', 'hydration_ml', 'activities')
         # El usuario se asignará automáticamente en la vista, no se pide en el JSON
+
+    def create(self, validated_data):
+        activities_data = validated_data.pop('activities', [])
+        daily_record = DailyRecord.objects.create(**validated_data)
+        for activity_data in activities_data:
+            PhysicalActivity.objects.create(daily_record=daily_record, **activity_data)
+        return daily_record
+
+    def update(self, instance, validated_data):
+        activities_data = validated_data.pop('activities', None)
+        
+        # Actualizar campos del DailyRecord (pasos, sueño, etc.)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # Si se envía una nueva lista de actividades, reemplazamos las anteriores
+        if activities_data is not None:
+            instance.activities.all().delete()
+            for activity_data in activities_data:
+                PhysicalActivity.objects.create(daily_record=instance, **activity_data)
+        
+        return instance
 
 class RegisterSerializer(serializers.ModelSerializer):
     # DEFINICION DE CAMPOS************************************************************************************************************************************************************

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
 import 'dart:math' as math;
@@ -12,6 +14,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:pedometer/pedometer.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:confetti/confetti.dart';
+import '../config.dart';
 import 'progress_screen.dart';
 import 'record_screen.dart';
 import 'hydration_screen.dart';
@@ -34,6 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
 
   // Variables para el podómetro
+  StreamSubscription<StepCount>? _stepCountSubscription;
   late Stream<StepCount> _stepCountStream;
   int _steps = 0;
   int _lastSensorReading = -1; // Última lectura del sensor guardada
@@ -65,6 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // Variables para el registro diario (Racha y Check-in)
   List<String> _checkInDates = [];
   int _currentStreak = 0;
+  int? _todayRecordId; // ID del registro diario en backend para actualizaciones
 
   @override
   void initState() {
@@ -84,6 +89,9 @@ class _HomeScreenState extends State<HomeScreen> {
     await _loadSleepPreferences();
     await _loadCheckInData(); // Cargar historial de registros
 
+    // Sincronizar datos del backend (Recuperar historial y datos de hoy al iniciar sesión)
+    await _syncDataFromBackend();
+
     // 2. Inicializar notificaciones (Puede abrir diálogo de permiso)
     await _initNotifications();
 
@@ -96,6 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    _stepCountSubscription?.cancel();
     _timer?.cancel();
     _pageController.dispose();
     _confettiController.dispose();
@@ -294,11 +303,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (status.isGranted) {
       _stepCountStream = Pedometer.stepCountStream;
-      _stepCountStream.listen(_onStepCount).onError(_onStepCountError);
+      _stepCountSubscription = _stepCountStream.listen(_onStepCount);
+      _stepCountSubscription?.onError(_onStepCountError);
     }
   }
 
   void _onStepCount(StepCount event) {
+    if (!mounted) return;
+
     int sensorSteps = event.steps;
     String today = DateTime.now().toString().substring(0, 10);
 
@@ -450,10 +462,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _logout(BuildContext context) async {
+    // Sincronizar datos automáticos antes de borrar todo
+    await _syncDataOnLogout();
+
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('accessToken');
-    await prefs.remove('refreshToken');
-    await prefs.remove('rolUser');
+    await prefs.clear(); // Limpia todos los datos locales para evitar mezclar sesiones
     // Navegar al login y eliminar rutas anteriores
     Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
@@ -737,6 +750,206 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
+  // --- LÓGICA DE BACKEND (HISTORIAL DIARIO) ---
+
+  // Helper para calcular métricas (Distancia y Calorías) basadas en pasos
+  Map<String, double> _getMetrics() {
+    double km;
+    double calories;
+    if (_userHeight != null && _userWeight != null) {
+      double strideInMeters = (_userHeight! * 0.415) / 100;
+      km = (_steps * strideInMeters) / 1000;
+      calories = (_steps * _userWeight! * 0.0005);
+    } else {
+      km = _steps * 0.000762;
+      calories = _steps * 0.04;
+    }
+    return {'km': km, 'kcal': calories};
+  }
+
+  Future<bool> _saveDailyDataToBackend({
+    required double sleepHours,
+    required String sleepQuality,
+    required int? mood,
+    required List<Map<String, dynamic>> activities,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('accessToken');
+
+    if (token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Error: No autenticado"), backgroundColor: Colors.red));
+      return false;
+    }
+
+    final metrics = _getMetrics();
+    final String today = DateTime.now().toString().substring(0, 10);
+
+    final Map<String, dynamic> requestBody = {
+      'date': today,
+      'steps': _steps,
+      'distance_km': double.parse(metrics['km']!.toStringAsFixed(2)),
+      'calories_kcal': double.parse(metrics['kcal']!.toStringAsFixed(2)),
+      'hydration_ml': _waterIntake,
+      'sleep_hours': sleepHours,
+      'sleep_quality': sleepQuality,
+      'mood': mood,
+      'activities': activities,
+    };
+
+    try {
+      http.Response response;
+
+      if (_todayRecordId == null) {
+        // Crear nuevo registro (POST)
+        response = await http.post(
+          Uri.parse(DireccionBaseURL.historyUrl),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode(requestBody),
+        );
+      } else {
+        // Actualizar registro existente (PATCH)
+        response = await http.patch(
+          Uri.parse("${DireccionBaseURL.historyUrl}$_todayRecordId/"),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode(requestBody),
+        );
+      }
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        // Si se creó uno nuevo, guardamos el ID para futuras actualizaciones hoy
+        if (response.statusCode == 201) {
+          final respData = jsonDecode(response.body);
+          if (respData is Map && respData.containsKey('id')) {
+            _todayRecordId = respData['id'];
+          }
+        }
+        return true; // Éxito
+      } else if (response.statusCode == 400) {
+        if (response.body.contains("already exists")) {
+           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Ya existe un registro para hoy. Intenta mañana."), backgroundColor: Colors.orange));
+        } else {
+           print("Error 400: ${response.body}");
+           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Error en los datos enviados."), backgroundColor: Colors.red));
+        }
+        return false;
+      } else {
+        print("Server Error: ${response.statusCode} - ${response.body}");
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error del servidor: ${response.statusCode}"), backgroundColor: Colors.red));
+        return false;
+      }
+    } catch (e) {
+      print("Connection Error: $e");
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error de conexión: $e"), backgroundColor: Colors.red));
+      return false;
+    }
+  }
+
+  // --- SINCRONIZACIÓN AUTOMÁTICA AL SALIR ---
+  Future<void> _syncDataOnLogout() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('accessToken');
+    if (token == null) return;
+
+    final metrics = _getMetrics();
+    final String today = DateTime.now().toString().substring(0, 10);
+
+    // Solo enviamos datos automáticos (Pasos, Hidratación, Métricas)
+    Map<String, dynamic> body = {
+      'steps': _steps,
+      'distance_km': double.parse(metrics['km']!.toStringAsFixed(2)),
+      'calories_kcal': double.parse(metrics['kcal']!.toStringAsFixed(2)),
+      'hydration_ml': _waterIntake,
+    };
+
+    try {
+      if (_todayRecordId != null) {
+        // Actualizar (PATCH) si ya existe registro hoy
+        await http.patch(
+          Uri.parse("${DireccionBaseURL.historyUrl}$_todayRecordId/"),
+          headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+          body: jsonEncode(body),
+        );
+      } else {
+        // Crear (POST) si no existe (con fecha obligatoria)
+        body['date'] = today;
+        await http.post(
+          Uri.parse(DireccionBaseURL.historyUrl),
+          headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+          body: jsonEncode(body),
+        );
+      }
+      print("Datos sincronizados al cerrar sesión.");
+    } catch (e) {
+      print("Error sincronizando al salir: $e");
+    }
+  }
+
+  // --- SINCRONIZACIÓN CON BACKEND (RECUPERAR DATOS) ---
+  Future<void> _syncDataFromBackend() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('accessToken');
+
+    if (token == null) return;
+
+    try {
+      final response = await http.get(
+        Uri.parse(DireccionBaseURL.historyUrl),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // Decodificar respuesta (Lista de registros)
+        // Usamos utf8.decode para asegurar caracteres especiales
+        final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+        
+        // 1. Recuperar Racha (Lista de fechas)
+        List<String> historyDates = data.map((e) => e['date'].toString()).toList();
+        
+        // 2. Buscar registro de HOY
+        String today = DateTime.now().toString().substring(0, 10);
+        var todayRecord = data.firstWhere(
+          (element) => element['date'] == today,
+          orElse: () => null,
+        );
+
+        setState(() {
+          _checkInDates = historyDates;
+          _calculateStreak();
+
+          if (todayRecord != null) {
+            _todayRecordId = todayRecord['id']; // Capturar ID para poder hacer PATCH luego
+            // Recuperar pasos y agua si el backend tiene datos
+            _steps = todayRecord['steps'] ?? 0;
+            _waterIntake = todayRecord['hydration_ml'] ?? 0;
+            _waterGoalReached = _waterIntake >= _waterGoal;
+            _stepGoalReached = _steps >= _stepGoal;
+          } else {
+            _todayRecordId = null; // Resetear si es un nuevo día sin registro
+          }
+        });
+
+        // Persistir en local para que funcionen los contadores incrementales y la persistencia offline
+        await prefs.setStringList('checkInDates', _checkInDates);
+        if (todayRecord != null) {
+          await prefs.setInt('dailySteps', _steps);
+          await prefs.setInt('dailyWater', _waterIntake);
+          await prefs.setString('lastWaterDate', today);
+          await prefs.setString('lastDate', today);
+        }
+      }
+    } catch (e) {
+      print("Error sincronizando datos: $e");
+    }
   }
 
   // --- DIALOGO DE SELECCIÓN DE TAZA ---
@@ -1214,6 +1427,7 @@ class _HomeScreenState extends State<HomeScreen> {
         String sleepQuality = "Buena";
         int selectedMoodIndex = -1;
         bool didExercise = false;
+        bool isSaving = false; // Estado local para carga
         Map<String, double> selectedActivities = {}; // Mapa para actividad y duración
 
         final List<String> activities = [
@@ -1470,19 +1684,42 @@ class _HomeScreenState extends State<HomeScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: () async {
+                            onPressed: isSaving ? null : () async {
+                              setState(() => isSaving = true);
+                              
                               // Guardar localmente la fecha para la racha
                               await _saveCheckIn();
                               
-                              if (!context.mounted) return;
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text("¡Información del día guardada!",
-                                      style: GoogleFonts.poppins()),
-                                  backgroundColor: const Color(0xFF134E5E),
-                                ),
+                              // Preparar lista de actividades para el backend
+                              List<Map<String, dynamic>> activitiesList = [];
+                              selectedActivities.forEach((key, value) {
+                                activitiesList.add({
+                                  'activity_type': key,
+                                  'duration_minutes': value.toInt(),
+                                });
+                              });
+
+                              // Enviar al backend
+                              bool success = await _saveDailyDataToBackend(
+                                sleepHours: sleepHours,
+                                sleepQuality: sleepQuality,
+                                mood: selectedMoodIndex != -1 ? selectedMoodIndex + 1 : null,
+                                activities: activitiesList,
                               );
+                              
+                              setState(() => isSaving = false);
+
+                              if (success) {
+                                if (!context.mounted) return;
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("¡Información del día guardada y sincronizada!",
+                                        style: GoogleFonts.poppins()),
+                                    backgroundColor: const Color(0xFF134E5E),
+                                  ),
+                                );
+                              }
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF134E5E),
@@ -1490,7 +1727,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10)),
                             ),
-                            child: Text("Guardar Día",
+                            child: isSaving 
+                              ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                              : Text("Guardar Día",
                                 style: GoogleFonts.poppins(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,

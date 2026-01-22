@@ -146,3 +146,11 @@ class DailyRecordListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         # Asigna automáticamente el usuario al guardar
         serializer.save(user=self.request.user)
+
+class DailyRecordDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = DailyRecordSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Asegura que el usuario solo pueda editar sus propios registros
+        return DailyRecord.objects.filter(user=self.request.user)
