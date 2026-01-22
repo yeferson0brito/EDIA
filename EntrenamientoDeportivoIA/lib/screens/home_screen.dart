@@ -901,102 +901,111 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // TARJETA DE INTENSIDAD DEL DÍA (Reemplaza Próximo Entreno)
-  Widget _buildIntensityCard() {
-    return GestureDetector(
-      onTap: _showIntensityDetailDialog,
-      child: Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.bolt, color: Color(0xFF134E5E)),
-              const SizedBox(width: 10),
-              Text(
-                'Intensidad del día',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF134E5E),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 5),
-          // Lista de ejercicios de ejemplo (Modelo Base)
-          _buildExerciseItem(Icons.directions_run, 'Caminata', '30 min'),
-          const SizedBox(height: 5),
-          _buildExerciseItem(Icons.pool, 'Natación', '30 min'),
-          const SizedBox(height: 5),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Detalles',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  color: const Color(0xFF134E5E).withOpacity(0.8),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(width: 5), 
-              const Icon(
-                Icons.more_horiz,
-                color: Color(0xFF134E5E),
-              ),
-            ],
-          ),
-        ],
-      ),
-    ),
-    );
-  }
+  // TARJETA DE REGISTRO DIARIO (Reemplaza Intensidad)
+  Widget _buildDailyCheckInCard() {
+    // Mock data: 1 = reportado, 0 = no reportado (Últimos 7 días)
+    final List<int> weekStatus = [1, 1, 0, 1, 1, 0, 0];
+    final List<String> days = ["L", "M", "M", "J", "V", "S", "D"];
 
-  Widget _buildExerciseItem(IconData icon, String name, String duration) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: Colors.grey[100],
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, size: 20, color: const Color(0xFF134E5E)),
-        ),
-        const SizedBox(width: 15),
-        Expanded(
-          child: Text(
-            name,
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.black87,
+    return GestureDetector(
+      onTap: _showDailyCheckInDialog,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
             ),
-          ),
+          ],
         ),
-        Text(
-          duration,
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey[600],
-          ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF134E5E).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.edit_calendar,
+                          color: Color(0xFF134E5E)),
+                    ),
+                    const SizedBox(width: 15),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Registrar mi día',
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF134E5E),
+                          ),
+                        ),
+                        Text(
+                          'Racha actual: 2 días',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const Icon(Icons.chevron_right, color: Colors.grey),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Visualización de la semana
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(7, (index) {
+                bool isDone = weekStatus[index] == 1;
+                return Column(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color:
+                            isDone ? const Color(0xFF134E5E) : Colors.grey[200],
+                        border: isDone
+                            ? null
+                            : Border.all(color: Colors.grey[300]!),
+                      ),
+                      child: isDone
+                          ? const Icon(Icons.check,
+                              size: 20, color: Colors.white)
+                          : null,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      days[index],
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                );
+              }),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
@@ -1127,60 +1136,276 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- DIALOGO DE INTENSIDAD ---
-  void _showIntensityDetailDialog() {
+  // --- DIALOGO DE REGISTRO DIARIO ---
+  void _showDailyCheckInDialog() {
     showDialog(
       context: context,
       barrierColor: Colors.black.withOpacity(0.4),
       builder: (BuildContext context) {
+        // Variables locales para el formulario del diálogo
+        double sleepHours = 7.0;
+        String sleepQuality = "Buena";
+        int selectedMoodIndex = -1;
+        bool didExercise = false;
+        String selectedActivity = "Caminata";
+        double exerciseDuration = 30;
+
+        final List<String> activities = [
+          "Caminata",
+          "Correr",
+          "Gimnasio",
+          "Natación",
+          "Yoga",
+          "Ciclismo",
+          "Otro"
+        ];
+        final List<Map<String, dynamic>> moods = [
+          {"emoji": "😫", "label": "Mal"},
+          {"emoji": "😐", "label": "Normal"},
+          {"emoji": "🙂", "label": "Bien"},
+          {"emoji": "🤩", "label": "Excelente"},
+        ];
+
         return BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-          child: Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            backgroundColor: Colors.white,
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              width: MediaQuery.of(context).size.width * 0.85,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Intensidad del Día',
-                    style: GoogleFonts.poppins(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF134E5E),
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              return Dialog(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
+                backgroundColor: Colors.white,
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  width: MediaQuery.of(context).size.width * 0.9,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Registrar mi día',
+                              style: GoogleFonts.poppins(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF134E5E),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close, color: Colors.grey),
+                              onPressed: () => Navigator.pop(context),
+                            )
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+
+                        // 1. SUEÑO
+                        Text("💤 Sueño",
+                            style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                                color: const Color(0xFF134E5E))),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text("Horas: ${sleepHours.toStringAsFixed(1)}",
+                                style: GoogleFonts.poppins(fontSize: 14)),
+                            Text(sleepQuality,
+                                style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.bold,
+                                    color: const Color(0xFF134E5E))),
+                          ],
+                        ),
+                        Slider(
+                          value: sleepHours,
+                          min: 0,
+                          max: 12,
+                          divisions: 24,
+                          activeColor: const Color(0xFF134E5E),
+                          onChanged: (val) => setState(() => sleepHours = val),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: ["Mala", "Regular", "Buena", "Excelente"]
+                              .map((q) {
+                            bool isSelected = sleepQuality == q;
+                            return GestureDetector(
+                              onTap: () => setState(() => sleepQuality = q),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? const Color(0xFF134E5E)
+                                      : Colors.grey[200],
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  q,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : Colors.black87,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+
+                        const SizedBox(height: 20),
+                        const Divider(),
+                        const SizedBox(height: 10),
+
+                        // 2. ESTADO DE ÁNIMO
+                        Text("🙂 ¿Cómo te sientes hoy?",
+                            style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                                color: const Color(0xFF134E5E))),
+                        const SizedBox(height: 15),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: List.generate(moods.length, (index) {
+                            bool isSelected = selectedMoodIndex == index;
+                            return GestureDetector(
+                              onTap: () =>
+                                  setState(() => selectedMoodIndex = index),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? const Color(0xFF134E5E).withOpacity(0.1)
+                                      : Colors.transparent,
+                                  shape: BoxShape.circle,
+                                  border: isSelected
+                                      ? Border.all(
+                                          color: const Color(0xFF134E5E),
+                                          width: 2)
+                                      : Border.all(
+                                          color: Colors.transparent, width: 2),
+                                ),
+                                child: Text(
+                                  moods[index]["emoji"],
+                                  style: const TextStyle(fontSize: 32),
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+
+                        const SizedBox(height: 20),
+                        const Divider(),
+                        const SizedBox(height: 10),
+
+                        // 3. ACTIVIDAD FÍSICA
+                        Text("🏃 Actividad Física",
+                            style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                                color: const Color(0xFF134E5E))),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text("¿Realizaste alguna actividad?",
+                              style: GoogleFonts.poppins(fontSize: 14)),
+                          value: didExercise,
+                          activeColor: const Color(0xFF134E5E),
+                          onChanged: (val) => setState(() => didExercise = val),
+                        ),
+
+                        if (didExercise) ...[
+                          Container(
+                            padding: const EdgeInsets.all(15),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[50],
+                              borderRadius: BorderRadius.circular(15),
+                              border: Border.all(color: Colors.grey[200]!),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                DropdownButtonFormField<String>(
+                                  value: selectedActivity,
+                                  decoration: InputDecoration(
+                                    labelText: "Tipo de actividad",
+                                    labelStyle:
+                                        GoogleFonts.poppins(fontSize: 14),
+                                    border: OutlineInputBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(10)),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 15, vertical: 10),
+                                  ),
+                                  items: activities.map((String value) {
+                                    return DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value,
+                                          style: GoogleFonts.poppins(
+                                              fontSize: 14)),
+                                    );
+                                  }).toList(),
+                                  onChanged: (val) =>
+                                      setState(() => selectedActivity = val!),
+                                ),
+                                const SizedBox(height: 15),
+                                Text(
+                                    "Duración: ${exerciseDuration.toInt()} min",
+                                    style: GoogleFonts.poppins(fontSize: 14)),
+                                Slider(
+                                  value: exerciseDuration,
+                                  min: 10,
+                                  max: 180,
+                                  divisions: 17,
+                                  label: "${exerciseDuration.toInt()} min",
+                                  activeColor: const Color(0xFF134E5E),
+                                  onChanged: (val) =>
+                                      setState(() => exerciseDuration = val),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+
+                        const SizedBox(height: 30),
+
+                        // BOTÓN GUARDAR
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text("¡Información del día guardada!",
+                                      style: GoogleFonts.poppins()),
+                                  backgroundColor: const Color(0xFF134E5E),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF134E5E),
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
+                            ),
+                            child: Text("Guardar Día",
+                                style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16)),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Ejercicios recomendados basados en tu nivel',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 20),
-                  // Lista expandida de ejemplo
-                  _buildExerciseItem(Icons.directions_run, 'Elíptica', '30 min'),
-                  const SizedBox(height: 10),
-                  _buildExerciseItem(Icons.pool, 'Natación', '30 min'),
-                  const SizedBox(height: 10),
-                  _buildExerciseItem(Icons.fitness_center, 'Pesas', '20 min'),
-                  const SizedBox(height: 10),
-                  _buildExerciseItem(Icons.self_improvement, 'Yoga', '15 min'),
-                  
-                  const SizedBox(height: 20),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text(
-                      'Cerrar',
-                      style: GoogleFonts.poppins(color: Colors.grey),
-                    ),
-                  )
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           ),
         );
       },
@@ -1777,8 +2002,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                       const SizedBox(height: 16),
-                      // Tarjeta 4: Intensidad del día (Reemplaza Próximo Entreno)
-                      _buildIntensityCard(),
+                      // Tarjeta 4: Registro Diario (Reemplaza Intensidad)
+                      _buildDailyCheckInCard(),
                       const SizedBox(height: 16),
                       // Tarjeta 5: Sueño / Tips
                       _buildSleepCard(),
